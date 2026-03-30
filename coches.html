@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Highway Racer 90s - Time Attack</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0a0f1a 0%, #03060c 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Courier New', 'VT323', 'Press Start 2P', monospace;
+      font-weight: bold;
+      padding: 16px;
+    }
+
+    .game-container {
+      position: relative;
+      border-radius: 24px;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+      background: #000;
+      display: inline-block;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      cursor: none;
+      border-radius: 16px;
+      box-shadow: 0 0 0 4px #ffcc44, 0 0 0 8px #2a1e0c;
+    }
+
+    .hud {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 10;
+      text-shadow: 2px 2px 0 #000;
+      font-size: 1rem;
+      letter-spacing: 2px;
+    }
+
+    .hud div {
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      padding: 6px 12px;
+      border-radius: 40px;
+      color: #f2e95c;
+      border: 1px solid #ffcc33;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+
+    .touch-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 35px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .touch-btn {
+      pointer-events: auto;
+      background: rgba(20,20,30,0.85);
+      backdrop-filter: blur(12px);
+      border: 2px solid #ffaa33;
+      border-radius: 60px;
+      width: 70px;
+      height: 70px;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #ffdd88;
+      text-align: center;
+      line-height: 66px;
+      box-shadow: 0 6px 0 #553300;
+      transition: 0.05s linear;
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+
+    .touch-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #553300;
+    }
+
+    @media (min-width: 800px) {
+      .touch-panel { display: none; }
+    }
+
+    .menu-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      border-radius: 16px;
+    }
+
+    .menu-card {
+      background: linear-gradient(145deg, #1a2a2a, #0a1217);
+      border: 4px solid #f5b642;
+      border-radius: 40px;
+      padding: 28px 20px;
+      text-align: center;
+      width: 300px;
+      box-shadow: 0 0 30px rgba(255,200,0,0.4);
+    }
+
+    .menu-card h1 {
+      font-size: 1.8rem;
+      color: #ffc857;
+      text-shadow: 3px 3px 0 #7a2e00;
+      margin-bottom: 16px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .menu-card input {
+      background: #2a2418;
+      border: 2px solid #f5a623;
+      padding: 10px;
+      width: 100%;
+      margin: 12px 0;
+      color: #ffeaac;
+      font-size: 1rem;
+      text-align: center;
+      border-radius: 60px;
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    .menu-card button {
+      background: #f5a623;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      font-size: 1.2rem;
+      font-weight: bold;
+      font-family: monospace;
+      border-radius: 60px;
+      color: #1e1a0c;
+      margin-top: 12px;
+      transition: 0.1s;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #7a3e00;
+    }
+
+    .menu-card button:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #7a3e00;
+    }
+
+    .highscore-text {
+      margin-top: 18px;
+      color: #ffdd99;
+      font-size: 0.9rem;
+      background: #00000066;
+      padding: 8px;
+      border-radius: 30px;
+    }
+
+    .footer-tip {
+      font-size: 0.7rem;
+      margin-top: 12px;
+      color: #bbaaff;
+    }
+  </style>
+</head>
+<body>
+<div class="game-container">
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <div class="hud">
+    <div>🏁 SCORE: <span id="scoreValue">0</span></div>
+    <div>❤️ <span id="livesValue">2</span></div>
+    <div>⏱️ <span id="timeValue">30</span>s</div>
+    <div>🏆 BEST: <span id="bestValue">0</span></div>
+  </div>
+  <div class="touch-panel">
+    <button class="touch-btn" id="leftTouch">◀</button>
+    <button class="touch-btn" id="rightTouch">▶</button>
+  </div>
+  <div id="menuOverlay" class="menu-overlay">
+    <div class="menu-card">
+      <h1>🔥 TIME RACER 90s 🔥</h1>
+      <input type="text" id="playerName" maxlength="12" placeholder="PILOTO" value="RACER">
+      <button id="startRaceBtn">🚗 START RACE 🚗</button>
+      <div class="highscore-text">🏁 MEJOR PUNTUACIÓN 🏁<br><span id="menuBest">0</span></div>
+      <div class="footer-tip">← → | ESQUIVA COCHES | 1 VIDA EXTRA</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    // ---------- CONFIGURACIÓN ----------
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const width = 400, height = 600;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Constantes de pista
+    const ROAD_WIDTH = 220;
+    const LANE_COUNT = 3;
+    const LANE_WIDTH = ROAD_WIDTH / LANE_COUNT;
+    const LEFT_BORDER = (width - ROAD_WIDTH) / 2;
+    const RIGHT_BORDER = LEFT_BORDER + ROAD_WIDTH;
+
+    // Jugador
+    const PLAYER_WIDTH = 32;
+    const PLAYER_HEIGHT = 48;
+    let playerX = width/2 - PLAYER_WIDTH/2;
+    let playerLane = 1;     // 0,1,2
+    let invincibleTimer = 0; // segundos de invencibilidad tras golpe
+
+    // Estado de carrera
+    let gameActive = false;
+    let score = 0;
+    let lives = 2;           // 2 vidas = 1 extra (chocarse una vez sin morir)
+    let timeLeft = 30.0;     // 30 segundos de carrera
+    let bestScore = 0;
+    
+    // Velocidad y mundo
+    let speed = 6.8;
+    let baseSpeed = 6.8;
+    let roadOffset = 0;
+    let enemies = [];
+    const ENEMY_WIDTH = 28;
+    const ENEMY_HEIGHT = 44;
+    let spawnCounter = 0;
+    let spawnDelay = 42;
+    
+    // Efectos visuales
+    let particles = [];
+    let flashAlpha = 0;
+    let raceFinished = false;   // para mostrar victoria
+    
+    // Sonido (web audio)
+    let audioCtx = null;
+    let soundEnabled = true;
+    
+    // Controles
+    let leftPressed = false, rightPressed = false;
+    let touchLeft = false, touchRight = false;
+    
+    // Elementos DOM
+    const scoreSpan = document.getElementById('scoreValue');
+    const livesSpan = document.getElementById('livesValue');
+    const timeSpan = document.getElementById('timeValue');
+    const bestSpan = document.getElementById('bestValue');
+    const menuBestSpan = document.getElementById('menuBest');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const startBtn = document.getElementById('startRaceBtn');
+    const playerNameInput = document.getElementById('playerName');
+    const leftTouchBtn = document.getElementById('leftTouch');
+    const rightTouchBtn = document.getElementById('rightTouch');
+    
+    // Cargar mejor puntuación
+    try{
+      let stored = localStorage.getItem('retroTimeRacer_best');
+      if(stored) bestScore = parseInt(stored);
+      bestSpan.innerText = bestScore;
+      menuBestSpan.innerText = bestScore;
+    }catch(e){}
+    
+    // ---------- AUDIO ----------
+    function initAudio() {
+      if(!audioCtx && soundEnabled){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+    
+    function playSound(type) {
+      if(!soundEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      if(type === 'crash') {
+        osc.frequency.value = 140;
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.45);
+        osc.start();
+        osc.stop(now+0.4);
+      } else if(type === 'overtake') {
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.2);
+        osc.start();
+        osc.stop(now+0.18);
+      } else if(type === 'start') {
+        osc.frequency.value = 660;
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.25);
+        osc.start();
+        osc.stop(now+0.22);
+      } else if(type === 'finish') {
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.6);
+        osc.start();
+        osc.stop(now+0.55);
+        setTimeout(()=>{ if(audioCtx) playSound('overtake'); }, 200);
+      }
+    }
+    
+    // ---------- PARTÍCULAS ----------
+    function addParticles(x, y, count=8) {
+      for(let i=0;i<count;i++) {
+        particles.push({
+          x: x + (Math.random()-0.5)*20,
+          y: y + (Math.random()-0.5)*20,
+          vx: (Math.random()-0.5)*180,
+          vy: (Math.random()-0.8)*150 - 50,
+          life: 0.6,
+          size: 3+Math.random()*5,
+          color: `hsl(${30+Math.random()*20}, 80%, 60%)`
+        });
+      }
+    }
+    
+    function updateParticles(deltaTime) {
+      for(let i=0;i<particles.length;i++) {
+        let p = particles[i];
+        p.x += p.vx * deltaTime;
+        p.y += p.vy * deltaTime;
+        p.life -= deltaTime * 1.5;
+        if(p.life <= 0 || p.y > height+100 || p.y < -50) {
+          particles.splice(i,1);
+          i--;
+        }
+      }
+    }
+    
+    // ---------- REINICIO DE JUEGO ----------
+    function resetGame() {
+      score = 0;
+      lives = 2;
+      timeLeft = 30.0;
+      speed = baseSpeed;
+      enemies = [];
+      spawnCounter = 12;
+      invincibleTimer = 0;
+      flashAlpha = 0;
+      raceFinished = false;
+      playerLane = 1;
+      updatePlayerPosition();
+      gameActive = true;
+      updateUI();
+    }
+    
+    function updatePlayerPosition() {
+      let targetX = LEFT_BORDER + (playerLane * LANE_WIDTH) + (LANE_WIDTH/2) - PLAYER_WIDTH/2;
+      playerX = targetX;
+      playerX = Math.max(LEFT_BORDER, Math.min(RIGHT_BORDER - PLAYER_WIDTH, playerX));
+    }
+    
+    // Generar enemigo
+    function trySpawnEnemy() {
+      if(!gameActive || raceFinished) return;
+      let lane = Math.floor(Math.random() * LANE_COUNT);
+      let enemyX = LEFT_BORDER + lane * LANE_WIDTH + (LANE_WIDTH/2) - ENEMY_WIDTH/2;
+      enemyX = Math.max(LEFT_BORDER, Math.min(RIGHT_BORDER - ENEMY_WIDTH, enemyX));
+      let colors = ['#c23632', '#3b7a5e', '#2d6a8f', '#a55d35', '#8e5a3a'];
+      let color = colors[Math.floor(Math.random()*colors.length)];
+      enemies.push({
+        x: enemyX,
+        y: -ENEMY_HEIGHT,
+        w: ENEMY_WIDTH,
+        h: ENEMY_HEIGHT,
+        color: color,
+        lane: lane,
+        id: Math.random()
+      });
+    }
+    
+    // Actualizar lógica (física, colisiones, tiempo, puntuación)
+    function updateGame(deltaTime) {
+      if(!gameActive || raceFinished) return;
+      
+      // 1. Temporizador
+      timeLeft -= deltaTime;
+      if(timeLeft <= 0) {
+        timeLeft = 0;
+        finishRace(true); // victoria por tiempo cumplido
+        return;
+      }
+      
+      // 2. Puntuación base: puntos por segundo (velocidad * factor)
+      let scorePerSecond = Math.floor(speed * 2.2);
+      score += scorePerSecond * deltaTime;
+      
+      // 3. Aumento de velocidad progresivo
+      if(speed < 13.5) {
+        speed = baseSpeed + (score / 4200);
+        speed = Math.min(speed, 13.8);
+      }
+      spawnDelay = Math.max(28, 46 - Math.floor(speed / 1.6));
+      
+      // 4. Control del jugador
+      let move = 0;
+      if(leftPressed || touchLeft) move = -1;
+      if(rightPressed || touchRight) move = 1;
+      if(move !== 0) {
+        playerLane += move * (deltaTime * 9);
+        playerLane = Math.max(0, Math.min(LANE_COUNT-1, playerLane));
+        updatePlayerPosition();
+      }
+      
+      // 5. Actualizar enemigos y sumar puntos por adelantamiento (cuando salen de pantalla)
+      for(let i=0;i<enemies.length;i++) {
+        let e = enemies[i];
+        e.y += speed * (deltaTime * 60);
+        if(e.y > height + 150) {
+          // Adelantamiento exitoso: suma puntos extra
+          if(gameActive && !raceFinished) {
+            let bonus = 25 + Math.floor(speed * 2);
+            score += bonus;
+            playSound('overtake');
+            addParticles(e.x + e.w/2, height - 30, 3);
+          }
+          enemies.splice(i,1);
+          i--;
+        }
+      }
+      
+      // 6. Spawn de nuevos coches
+      if(spawnCounter <= 0) {
+        trySpawnEnemy();
+        spawnCounter = spawnDelay;
+      } else {
+        spawnCounter -= 1;
+      }
+      
+      // 7. Invencibilidad timer
+      if(invincibleTimer > 0) {
+        invincibleTimer -= deltaTime;
+      }
+      
+      // 8. Colisiones (solo si no invencible)
+      if(invincibleTimer <= 0 && !raceFinished) {
+        const playerY = height - PLAYER_HEIGHT - 12;
+        for(let i=0;i<enemies.length;i++) {
+          let e = enemies[i];
+          if(playerX < e.x+e.w && playerX+PLAYER_WIDTH > e.x &&
+             playerY < e.y+e.h && playerY+PLAYER_HEIGHT > e.y) {
+            // CHOQUE
+            playSound('crash');
+            addParticles(playerX+PLAYER_WIDTH/2, playerY+PLAYER_HEIGHT/2, 14);
+            flashAlpha = 0.7;
+            
+            if(lives > 1) {
+              // Gastar una vida extra (queda 1 vida)
+              lives--;
+              invincibleTimer = 1.5;   // invencibilidad 1.5 segundos
+              // Eliminar el coche que causó el choque
+              enemies.splice(i,1);
+              i--;
+              updateUI();
+              // Efecto visual de escudo
+            } else {
+              // Sin vidas -> game over
+              gameActive = false;
+              raceFinished = false;
+              if(score > bestScore) {
+                bestScore = Math.floor(score);
+                localStorage.setItem('retroTimeRacer_best', bestScore);
+                bestSpan.innerText = bestScore;
+                menuBestSpan.innerText = bestScore;
+              }
+              updateUI();
+              return;
+            }
+          }
+        }
+      }
+      
+      // Actualizar UI
+      updateUI();
+    }
+    
+    // Final de carrera (victoria)
+    function finishRace(isVictory) {
+      if(raceFinished) return;
+      raceFinished = true;
+      gameActive = false;
+      playSound('finish');
+      // Bonus por tiempo restante (cada segundo sobrante da 100 puntos)
+      let timeBonus = Math.floor(timeLeft * 100);
+      score += timeBonus;
+      if(score > bestScore) {
+        bestScore = Math.floor(score);
+        localStorage.setItem('retroTimeRacer_best', bestScore);
+        bestSpan.innerText = bestScore;
+        menuBestSpan.innerText = bestScore;
+      }
+      updateUI();
+      // Mostrar mensaje de victoria en el canvas (se renderizará)
+    }
+    
+    function updateUI() {
+      scoreSpan.innerText = Math.floor(score);
+      livesSpan.innerText = lives;
+      timeSpan.innerText = Math.max(0, Math.floor(timeLeft));
+      bestSpan.innerText = bestScore;
+    }
+    
+    // ---------- DIBUJADO ARCADE ----------
+    function draw() {
+      ctx.clearRect(0,0,width,height);
+      
+      // Cielo gradiente
+      let gradSky = ctx.createLinearGradient(0,0,0,height*0.6);
+      gradSky.addColorStop(0,'#0b1726');
+      gradSky.addColorStop(1,'#1c2f3f');
+      ctx.fillStyle = gradSky;
+      ctx.fillRect(0,0,width,height);
+      
+      // Asfalto
+      ctx.fillStyle = '#1a1f1c';
+      ctx.fillRect(LEFT_BORDER-8, 0, ROAD_WIDTH+16, height);
+      ctx.fillStyle = '#2c2e2a';
+      ctx.fillRect(LEFT_BORDER-4, 0, ROAD_WIDTH+8, height);
+      ctx.fillStyle = '#0f0f0d';
+      ctx.fillRect(LEFT_BORDER, 0, ROAD_WIDTH, height);
+      
+      // Líneas de carril
+      let lineOffset = (roadOffset % 40);
+      ctx.strokeStyle = '#ffdd99';
+      ctx.lineWidth = 3;
+      for(let i=1;i<LANE_COUNT;i++) {
+        let lineX = LEFT_BORDER + i*LANE_WIDTH;
+        ctx.beginPath();
+        ctx.setLineDash([20, 30]);
+        ctx.moveTo(lineX, lineOffset - 40);
+        ctx.lineTo(lineX, height + lineOffset);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.strokeStyle = '#ffaa44';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(LEFT_BORDER-3, 0, ROAD_WIDTH+6, height);
+      
+      // Línea central doble
+      ctx.beginPath();
+      ctx.strokeStyle = '#ffffaa';
+      ctx.lineWidth = 4;
+      ctx.setLineDash([25, 35]);
+      let centerX = LEFT_BORDER + ROAD_WIDTH/2;
+      ctx.moveTo(centerX, lineOffset-40);
+      ctx.lineTo(centerX, height+lineOffset);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Enemigos
+      for(let e of enemies) {
+        ctx.fillStyle = '#111111aa';
+        ctx.fillRect(e.x+2, e.y+3, e.w, e.h);
+        ctx.fillStyle = e.color;
+        ctx.fillRect(e.x, e.y, e.w, e.h);
+        ctx.fillStyle = '#222';
+        ctx.fillRect(e.x+4, e.y+6, e.w-8, 10);
+        ctx.fillStyle = '#ffcc88';
+        ctx.fillRect(e.x+5, e.y+20, 6, 8);
+        ctx.fillRect(e.x+e.w-11, e.y+20, 6, 8);
+        ctx.fillStyle = '#80c0ff';
+        ctx.fillRect(e.x+5, e.y+4, 6, 8);
+        ctx.fillRect(e.x+e.w-11, e.y+4, 6, 8);
+      }
+      
+      // Jugador
+      const playerY = height - PLAYER_HEIGHT - 12;
+      // efecto parpadeo invencible
+      let drawPlayer = true;
+      if(invincibleTimer > 0 && (Math.floor(Date.now()/100) % 2 === 0)) drawPlayer = false;
+      if(drawPlayer) {
+        ctx.fillStyle = '#e03a2e';
+        ctx.fillRect(playerX, playerY, PLAYER_WIDTH, PLAYER_HEIGHT);
+        ctx.fillStyle = '#222';
+        ctx.fillRect(playerX+4, playerY+8, 6, 12);
+        ctx.fillRect(playerX+PLAYER_WIDTH-10, playerY+8, 6, 12);
+        ctx.fillStyle = '#ffcc44';
+        ctx.fillRect(playerX+6, playerY+28, 20, 8);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(playerX+8, playerY+4, 6, 8);
+        ctx.fillRect(playerX+PLAYER_WIDTH-14, playerY+4, 6, 8);
+        ctx.fillStyle = '#ff6600';
+        ctx.fillRect(playerX+12, playerY+38, 8, 8);
+        ctx.fillStyle = '#f9f3c1';
+        ctx.fillRect(playerX+4, playerY+2, 5, 4);
+        ctx.fillRect(playerX+PLAYER_WIDTH-9, playerY+2, 5, 4);
+      }
+      
+      // Partículas
+      for(let p of particles) {
+        ctx.globalAlpha = p.life * 0.9;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      }
+      ctx.globalAlpha = 1;
+      
+      // Flash de choque
+      if(flashAlpha > 0) {
+        ctx.fillStyle = `rgba(255, 80, 40, ${flashAlpha*0.5})`;
+        ctx.fillRect(0,0,width,height);
+        flashAlpha -= 0.05;
+      }
+      
+      // Velocímetro retro
+      ctx.font = "bold 16px 'Courier New'";
+      ctx.fillStyle = "#ffcc66";
+      ctx.fillText(`⚡ ${Math.floor(speed*5.5)} km/h`, LEFT_BORDER+10, 45);
+      
+      // Vidas extra visual (corazón)
+      if(lives > 1) {
+        ctx.fillStyle = "#ff5566";
+        ctx.font = "18px monospace";
+        ctx.fillText("❤️ EXTRA", width-70, 45);
+      }
+      
+      // Mensajes de fin de carrera o game over
+      if(!gameActive && raceFinished) {
+        ctx.font = "bold 24px monospace";
+        ctx.fillStyle = "#ffcc44";
+        ctx.shadowBlur = 0;
+        ctx.fillText("🏆 VICTORY! 🏆", width/2-110, height/2-50);
+        ctx.font = "16px monospace";
+        ctx.fillStyle = "#fff0aa";
+        ctx.fillText(`PUNTUACIÓN: ${Math.floor(score)}`, width/2-80, height/2);
+        ctx.font = "12px monospace";
+        ctx.fillText("TOUCH PARA REINICIAR", width/2-90, height/2+50);
+      } else if(!gameActive && !raceFinished) {
+        ctx.font = "bold 28px monospace";
+        ctx.fillStyle = "#ff3300";
+        ctx.fillText("GAME OVER", width/2-100, height/2-40);
+        ctx.font = "12px monospace";
+        ctx.fillStyle = "#ffcc88";
+        ctx.fillText("PULSA PARA MENÚ", width/2-70, height/2+20);
+      }
+      
+      // Animación de carretera
+      roadOffset = (roadOffset + speed * 1.2) % 80;
+    }
+    
+    // ---------- LOOP PRINCIPAL ----------
+    let lastTime = 0;
+    function gameLoop(nowMs) {
+      requestAnimationFrame(gameLoop);
+      let now = nowMs / 1000;
+      let dt = Math.min(0.033, now - (lastTime || now));
+      if(dt <= 0) { lastTime = now; return; }
+      lastTime = now;
+      
+      if(gameActive && !raceFinished) {
+        updateGame(dt);
+      }
+      draw();
+    }
+    
+    // ---------- CONTROLES Y MENÚ ----------
+    function startRace() {
+      initAudio();
+      if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      playSound('start');
+      resetGame();
+      menuOverlay.style.display = 'none';
+      raceFinished = false;
+    }
+    
+    function showMenu() {
+      gameActive = false;
+      raceFinished = false;
+      menuOverlay.style.display = 'flex';
+      bestSpan.innerText = bestScore;
+      menuBestSpan.innerText = bestScore;
+    }
+    
+    // Eventos de teclado
+    window.addEventListener('keydown', (e) => {
+      const key = e.key;
+      if(key === 'ArrowLeft' || key === 'a' || key === 'A') {
+        leftPressed = true;
+        e.preventDefault();
+      } else if(key === 'ArrowRight' || key === 'd' || key === 'D') {
+        rightPressed = true;
+        e.preventDefault();
+      }
+      if(key === ' ' || key === 'Space' || key === 'Enter') {
+        if(!gameActive && menuOverlay.style.display !== 'flex') {
+          showMenu();
+        }
+        e.preventDefault();
+      }
+      if(key === 'r' || key === 'R') {
+        if(!gameActive) showMenu();
+        e.preventDefault();
+      }
+    });
+    
+    window.addEventListener('keyup', (e) => {
+      const key = e.key;
+      if(key === 'ArrowLeft' || key === 'a' || key === 'A') leftPressed = false;
+      if(key === 'ArrowRight' || key === 'd' || key === 'D') rightPressed = false;
+    });
+    
+    // Táctiles
+    leftTouchBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); touchLeft=true; });
+    leftTouchBtn.addEventListener('touchend', ()=>{ touchLeft=false; });
+    leftTouchBtn.addEventListener('mousedown', ()=> touchLeft=true);
+    leftTouchBtn.addEventListener('mouseup', ()=> touchLeft=false);
+    rightTouchBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); touchRight=true; });
+    rightTouchBtn.addEventListener('touchend', ()=>{ touchRight=false; });
+    rightTouchBtn.addEventListener('mousedown', ()=> touchRight=true);
+    rightTouchBtn.addEventListener('mouseup', ()=> touchRight=false);
+    
+    // Click en canvas para reiniciar después de game over/victoria
+    canvas.addEventListener('click', () => {
+      if(!gameActive && menuOverlay.style.display !== 'flex') {
+        showMenu();
+      }
+    });
+    
+    startBtn.addEventListener('click', () => {
+      let name = playerNameInput.value.trim();
+      if(name === "") name = "RACER";
+      startRace();
+    });
+    
+    canvas.addEventListener('contextmenu', (e)=>e.preventDefault());
+    
+    // Iniciar en menú
+    resetGame();
+    gameActive = false;
+    raceFinished = false;
+    showMenu();
+    requestAnimationFrame(gameLoop);
+    
+    // Silenciar con 'M'
+    window.addEventListener('keydown', (e) => {
+      if(e.key === 'm' || e.key === 'M') {
+        soundEnabled = !soundEnabled;
+        if(soundEnabled && !audioCtx) initAudio();
+      }
+    });
+    
+  })();
+</script>
+</body>
+</html>
