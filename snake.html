@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Snake Time Attack · 60 segundos para ganar</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0a1a1f, #021016);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Courier New', 'VT323', 'Press Start 2P', monospace;
+      padding: 20px;
+    }
+
+    /* Contenedor principal */
+    .game-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Panel de estadísticas fuera del canvas */
+    .stats-panel {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      border: 2px solid #88ff44;
+      border-radius: 60px;
+      padding: 12px 24px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ccff88;
+      text-shadow: 2px 2px 0 #1a3a1a;
+    }
+
+    .stat span:first-child {
+      font-size: 1.4rem;
+    }
+
+    .stat span:last-child {
+      background: #1a2a1a;
+      padding: 4px 12px;
+      border-radius: 40px;
+      min-width: 70px;
+      text-align: center;
+    }
+
+    .game-container {
+      position: relative;
+      border-radius: 28px;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,200,0.1);
+      background: #000;
+      display: inline-block;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 20px;
+      box-shadow: 0 0 0 4px #33cc66, 0 0 0 8px #1a3a2a;
+      cursor: pointer;
+    }
+
+    /* Controles táctiles para móvil */
+    .touch-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .touch-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .touch-btn {
+      background: rgba(20,30,25,0.85);
+      backdrop-filter: blur(12px);
+      border: 2px solid #88ff44;
+      border-radius: 60px;
+      width: 60px;
+      height: 60px;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ccff88;
+      text-align: center;
+      line-height: 56px;
+      box-shadow: 0 4px 0 #2a5a2a;
+      transition: 0.05s linear;
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+
+    .touch-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #2a5a2a;
+    }
+
+    @media (min-width: 701px) {
+      .touch-controls {
+        display: none;
+      }
+    }
+
+    .menu-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      border-radius: 20px;
+    }
+
+    .menu-card {
+      background: linear-gradient(145deg, #1e2a2a, #0a1217);
+      border: 4px solid #88ff44;
+      border-radius: 48px;
+      padding: 28px 24px;
+      text-align: center;
+      width: 320px;
+      box-shadow: 0 0 30px rgba(136,255,68,0.4);
+    }
+
+    .menu-card h1 {
+      font-size: 2rem;
+      color: #88ff44;
+      text-shadow: 3px 3px 0 #1a5a1a;
+      margin-bottom: 20px;
+      font-family: monospace;
+    }
+
+    .menu-card input {
+      background: #2a2418;
+      border: 2px solid #88ff44;
+      padding: 12px;
+      width: 100%;
+      margin: 12px 0;
+      color: #ccff88;
+      font-size: 1rem;
+      text-align: center;
+      border-radius: 60px;
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    .menu-card button {
+      background: #88ff44;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      font-size: 1.3rem;
+      font-weight: bold;
+      font-family: monospace;
+      border-radius: 60px;
+      color: #1a2a1a;
+      margin-top: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #2a6a2a;
+      transition: 0.05s linear;
+    }
+
+    .menu-card button:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #2a6a2a;
+    }
+
+    .highscore {
+      margin-top: 18px;
+      color: #ccff88;
+      background: #00000066;
+      padding: 8px;
+      border-radius: 30px;
+    }
+
+    .footer-tip {
+      font-size: 0.7rem;
+      margin-top: 12px;
+      color: #aaffaa;
+    }
+  </style>
+</head>
+<body>
+<div class="game-wrapper">
+  <div class="stats-panel">
+    <div class="stat">
+      <span>🍎</span>
+      <span id="scoreValue">0</span>
+    </div>
+    <div class="stat">
+      <span>⏱️</span>
+      <span id="timerValue">60</span>
+    </div>
+    <div class="stat">
+      <span>🏆</span>
+      <span id="bestValue">0</span>
+    </div>
+  </div>
+
+  <div class="game-container">
+    <canvas id="snakeCanvas" width="400" height="400"></canvas>
+    <div id="menuOverlay" class="menu-overlay">
+      <div class="menu-card">
+        <h1>🐍 TIME SNAKE</h1>
+        <input type="text" id="playerName" maxlength="12" placeholder="NOMBRE" value="SNAKE">
+        <button id="startGameBtn">🎮 ¡SOBREVIVE 60s! 🎮</button>
+        <div class="highscore">🏆 RÉCORD DE PUNTOS 🏆<br><span id="menuBest">0</span></div>
+        <div class="footer-tip">← ↑ ↓ → | TOCA FLECHAS | AGUANTA 60 SEGUNDOS</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="touch-controls">
+    <div class="touch-row">
+      <button class="touch-btn" id="btnUp">▲</button>
+    </div>
+    <div class="touch-row">
+      <button class="touch-btn" id="btnLeft">◀</button>
+      <button class="touch-btn" id="btnDown">▼</button>
+      <button class="touch-btn" id="btnRight">▶</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    // ---------- CANVAS ----------
+    const canvas = document.getElementById('snakeCanvas');
+    const ctx = canvas.getContext('2d');
+    const size = 400;
+    canvas.width = size;
+    canvas.height = size;
+    
+    const GRID_SIZE = 20;
+    const CELL_SIZE = size / GRID_SIZE;
+    
+    // Variables de la serpiente
+    let snake = [
+      {x: 10, y: 10},
+      {x: 9, y: 10},
+      {x: 8, y: 10},
+      {x: 7, y: 10}
+    ];
+    let direction = 'RIGHT';
+    let nextDirection = 'RIGHT';
+    let food = {x: 15, y: 10};
+    let score = 0;
+    let bestScore = 0;
+    
+    // Temporizador (60 segundos para ganar)
+    let timeLeft = 60.0;
+    let gameActive = false;
+    let gameLoopInterval = null;
+    let timerInterval = null;
+    let baseSpeed = 150;        // ms por movimiento
+    let currentSpeed = 150;
+    
+    // Sonido
+    let audioCtx = null;
+    let soundEnabled = true;
+    
+    // Elementos DOM
+    const scoreSpan = document.getElementById('scoreValue');
+    const timerSpan = document.getElementById('timerValue');
+    const bestSpan = document.getElementById('bestValue');
+    const menuBestSpan = document.getElementById('menuBest');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const startBtn = document.getElementById('startGameBtn');
+    const playerNameInput = document.getElementById('playerName');
+    
+    // Controles táctiles
+    const btnUp = document.getElementById('btnUp');
+    const btnDown = document.getElementById('btnDown');
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+    
+    // Cargar mejor puntuación
+    try {
+      let stored = localStorage.getItem('snake_time_best');
+      if(stored) bestScore = parseInt(stored);
+      bestSpan.innerText = bestScore;
+      menuBestSpan.innerText = bestScore;
+    } catch(e) {}
+    
+    // ---------- AUDIO ----------
+    function initAudio() {
+      if(!audioCtx && soundEnabled) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) { console.warn("Audio no soportado"); }
+      }
+    }
+    
+    function playSound(type) {
+      if(!soundEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      if(type === 'eat') {
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.18);
+        osc.start();
+        osc.stop(now+0.16);
+      } else if(type === 'crash') {
+        osc.frequency.value = 150;
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.5);
+        osc.start();
+        osc.stop(now+0.45);
+      } else if(type === 'win') {
+        osc.frequency.value = 660;
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.5);
+        osc.start();
+        osc.stop(now+0.45);
+      } else if(type === 'start') {
+        osc.frequency.value = 660;
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.25);
+        osc.start();
+        osc.stop(now+0.22);
+      }
+    }
+    
+    // ---------- LÓGICA DEL JUEGO ----------
+    function generateRandomFood() {
+      let maxAttempts = 1000;
+      let newFood = null;
+      while(maxAttempts-- > 0) {
+        let randX = Math.floor(Math.random() * GRID_SIZE);
+        let randY = Math.floor(Math.random() * GRID_SIZE);
+        if(!snake.some(segment => segment.x === randX && segment.y === randY)) {
+          newFood = {x: randX, y: randY};
+          break;
+        }
+      }
+      if(!newFood) {
+        gameWin("✨ ¡LLENASTE EL TABLERO! ✨");
+        return;
+      }
+      food = newFood;
+    }
+    
+    function gameWin(message = "🏆 ¡VICTORIA! 🏆") {
+      if(gameActive) {
+        gameActive = false;
+        if(gameLoopInterval) clearInterval(gameLoopInterval);
+        if(timerInterval) clearInterval(timerInterval);
+        playSound('win');
+        if(score > bestScore) {
+          bestScore = score;
+          localStorage.setItem('snake_time_best', bestScore);
+          bestSpan.innerText = bestScore;
+          menuBestSpan.innerText = bestScore;
+        }
+        drawEndMessage(message, true);
+      }
+    }
+    
+    function gameOver() {
+      if(gameActive) {
+        gameActive = false;
+        if(gameLoopInterval) clearInterval(gameLoopInterval);
+        if(timerInterval) clearInterval(timerInterval);
+        playSound('crash');
+        if(score > bestScore) {
+          bestScore = score;
+          localStorage.setItem('snake_time_best', bestScore);
+          bestSpan.innerText = bestScore;
+          menuBestSpan.innerText = bestScore;
+        }
+        drawEndMessage("GAME OVER", false);
+      }
+    }
+    
+    function moveSnake() {
+      if(!gameActive) return;
+      
+      let newDir = nextDirection;
+      if((newDir === 'RIGHT' && direction === 'LEFT') ||
+         (newDir === 'LEFT' && direction === 'RIGHT') ||
+         (newDir === 'UP' && direction === 'DOWN') ||
+         (newDir === 'DOWN' && direction === 'UP')) {
+        newDir = direction;
+      }
+      direction = newDir;
+      
+      let head = snake[0];
+      let newHead = {...head};
+      switch(direction) {
+        case 'RIGHT': newHead.x++; break;
+        case 'LEFT': newHead.x--; break;
+        case 'UP': newHead.y--; break;
+        case 'DOWN': newHead.y++; break;
+      }
+      
+      if(newHead.x < 0 || newHead.x >= GRID_SIZE || newHead.y < 0 || newHead.y >= GRID_SIZE) {
+        gameOver();
+        return;
+      }
+      
+      let willEat = (newHead.x === food.x && newHead.y === food.y);
+      
+      snake.unshift(newHead);
+      if(!willEat) {
+        snake.pop();
+      } else {
+        score++;
+        scoreSpan.innerText = score;
+        playSound('eat');
+        generateRandomFood();
+        if(currentSpeed > 70) {
+          currentSpeed = Math.max(70, baseSpeed - Math.floor(score / 8) * 5);
+          if(gameLoopInterval) {
+            clearInterval(gameLoopInterval);
+            gameLoopInterval = setInterval(moveSnake, currentSpeed);
+          }
+        }
+      }
+      
+      const headPos = snake[0];
+      for(let i=1; i<snake.length; i++) {
+        if(snake[i].x === headPos.x && snake[i].y === headPos.y) {
+          gameOver();
+          return;
+        }
+      }
+      
+      draw();
+    }
+    
+    function updateTimer() {
+      if(!gameActive) return;
+      timeLeft -= 1;
+      timerSpan.innerText = Math.max(0, Math.floor(timeLeft));
+      if(timeLeft <= 0) {
+        timeLeft = 0;
+        gameWin("🏆 ¡SOBREVIVISTE 60s! 🏆");
+      }
+    }
+    
+    // ---------- DIBUJADO ----------
+    function draw() {
+      ctx.clearRect(0,0,size,size);
+      ctx.fillStyle = '#0a1f1a';
+      ctx.fillRect(0,0,size,size);
+      ctx.strokeStyle = '#2a5a3a';
+      ctx.lineWidth = 0.5;
+      for(let i=0;i<=GRID_SIZE;i++) {
+        ctx.beginPath();
+        ctx.moveTo(i*CELL_SIZE,0);
+        ctx.lineTo(i*CELL_SIZE,size);
+        ctx.stroke();
+        ctx.moveTo(0,i*CELL_SIZE);
+        ctx.lineTo(size,i*CELL_SIZE);
+        ctx.stroke();
+      }
+      // Comida
+      ctx.fillStyle = '#ffaa44';
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(food.x*CELL_SIZE+CELL_SIZE/2, food.y*CELL_SIZE+CELL_SIZE/2, CELL_SIZE/2-2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#ff6622';
+      ctx.beginPath();
+      ctx.arc(food.x*CELL_SIZE+CELL_SIZE/2-2, food.y*CELL_SIZE+CELL_SIZE/2-2, 3, 0, Math.PI*2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      for(let i=0;i<snake.length;i++) {
+        let seg = snake[i];
+        let grad = ctx.createLinearGradient(seg.x*CELL_SIZE, seg.y*CELL_SIZE, (seg.x+1)*CELL_SIZE, (seg.y+1)*CELL_SIZE);
+        grad.addColorStop(0, '#44dd88');
+        grad.addColorStop(1, '#228844');
+        ctx.fillStyle = grad;
+        ctx.fillRect(seg.x*CELL_SIZE+1, seg.y*CELL_SIZE+1, CELL_SIZE-2, CELL_SIZE-2);
+        if(i===0) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(seg.x*CELL_SIZE+CELL_SIZE-8, seg.y*CELL_SIZE+5, 4, 4);
+          ctx.fillRect(seg.x*CELL_SIZE+4, seg.y*CELL_SIZE+5, 4, 4);
+        }
+      }
+    }
+    
+    function drawEndMessage(msg, isWin) {
+      draw();
+      ctx.font = "bold 22px monospace";
+      ctx.fillStyle = isWin ? "#88ff88" : "#ff8866";
+      ctx.shadowBlur = 0;
+      ctx.fillText(msg, size/2-ctx.measureText(msg).width/2, size/2-30);
+      ctx.font = "14px monospace";
+      ctx.fillStyle = "#ccffaa";
+      ctx.fillText("TOCA PARA REINICIAR", size/2-90, size/2+20);
+    }
+    
+    // ---------- REINICIO Y CONTROL ----------
+    function resetGame() {
+      snake = [
+        {x: 10, y: 10},
+        {x: 9, y: 10},
+        {x: 8, y: 10},
+        {x: 7, y: 10}
+      ];
+      direction = 'RIGHT';
+      nextDirection = 'RIGHT';
+      score = 0;
+      timeLeft = 60;
+      currentSpeed = baseSpeed;
+      scoreSpan.innerText = score;
+      timerSpan.innerText = "60";
+      generateRandomFood();
+      gameActive = true;
+      if(gameLoopInterval) clearInterval(gameLoopInterval);
+      if(timerInterval) clearInterval(timerInterval);
+      gameLoopInterval = setInterval(moveSnake, currentSpeed);
+      timerInterval = setInterval(updateTimer, 1000);
+      draw();
+    }
+    
+    function startGame() {
+      initAudio();
+      if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      playSound('start');
+      resetGame();
+      menuOverlay.style.display = 'none';
+    }
+    
+    function showMenu() {
+      gameActive = false;
+      if(gameLoopInterval) clearInterval(gameLoopInterval);
+      if(timerInterval) clearInterval(timerInterval);
+      menuOverlay.style.display = 'flex';
+      bestSpan.innerText = bestScore;
+      menuBestSpan.innerText = bestScore;
+      draw();
+    }
+    
+    // ---------- EVENTOS DE TECLADO Y TÁCTIL ----------
+    function changeDirection(newDir) {
+      if(!gameActive) return;
+      if((newDir === 'RIGHT' && direction === 'LEFT') ||
+         (newDir === 'LEFT' && direction === 'RIGHT') ||
+         (newDir === 'UP' && direction === 'DOWN') ||
+         (newDir === 'DOWN' && direction === 'UP')) return;
+      nextDirection = newDir;
+    }
+    
+    window.addEventListener('keydown', (e) => {
+      let key = e.key;
+      if(key === 'ArrowUp') changeDirection('UP');
+      else if(key === 'ArrowDown') changeDirection('DOWN');
+      else if(key === 'ArrowLeft') changeDirection('LEFT');
+      else if(key === 'ArrowRight') changeDirection('RIGHT');
+      if((key === ' ' || key === 'Space') && !gameActive && menuOverlay.style.display !== 'flex') showMenu();
+      if(key === 'r' && !gameActive) showMenu();
+      e.preventDefault();
+    });
+    
+    btnUp.addEventListener('touchstart', (e)=>{ e.preventDefault(); changeDirection('UP'); });
+    btnUp.addEventListener('mousedown', ()=> changeDirection('UP'));
+    btnDown.addEventListener('touchstart', (e)=>{ e.preventDefault(); changeDirection('DOWN'); });
+    btnDown.addEventListener('mousedown', ()=> changeDirection('DOWN'));
+    btnLeft.addEventListener('touchstart', (e)=>{ e.preventDefault(); changeDirection('LEFT'); });
+    btnLeft.addEventListener('mousedown', ()=> changeDirection('LEFT'));
+    btnRight.addEventListener('touchstart', (e)=>{ e.preventDefault(); changeDirection('RIGHT'); });
+    btnRight.addEventListener('mousedown', ()=> changeDirection('RIGHT'));
+    
+    canvas.addEventListener('click', () => {
+      if(!gameActive && menuOverlay.style.display !== 'flex') showMenu();
+    });
+    
+    startBtn.addEventListener('click', () => {
+      let name = playerNameInput.value.trim();
+      if(name === "") name = "SNAKE";
+      startGame();
+    });
+    
+    canvas.addEventListener('contextmenu', (e)=>e.preventDefault());
+    
+    // Inicializar con menú
+    resetGame();
+    gameActive = false;
+    if(gameLoopInterval) clearInterval(gameLoopInterval);
+    if(timerInterval) clearInterval(timerInterval);
+    showMenu();
+  })();
+</script>
+</body>
+</html>
