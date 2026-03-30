@@ -1,0 +1,547 @@
+¡Claro! Te he preparado un juego **Simon Says** con colores y sonidos, fácil de entender y muy adictivo. El juego muestra una secuencia de colores que debes repetir en el mismo orden. Cada ronda suma un color más, y si fallas, pierdes. Tiene puntuación, récord, sonidos retro, animaciones y controles táctiles. Perfecto para tu colección.
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Simon Says · Memoriza colores y sonidos</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at 30% 20%, #1a1a2e, #0f0f1a);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', 'Poppins', 'Orbitron', monospace;
+      padding: 20px;
+    }
+
+    .game-wrapper {
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      border-radius: 60px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .simon-container {
+      background: #0a0a14;
+      border-radius: 60px;
+      padding: 24px;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      border-radius: 50%;
+      box-shadow: 0 0 0 6px #ffcc44, 0 0 0 12px #2a2a1a, 0 20px 30px rgba(0,0,0,0.5);
+      cursor: pointer;
+    }
+
+    .info-panel {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      border-radius: 60px;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: bold;
+      color: #fff;
+      font-family: 'Orbitron', monospace;
+      border: 1px solid #ffcc44;
+      box-shadow: 0 0 12px rgba(255,204,68,0.3);
+    }
+
+    .stat span:first-child {
+      font-size: 1.3rem;
+    }
+
+    .stat span:last-child {
+      font-size: 1.6rem;
+      color: #ffcc44;
+      text-shadow: 0 0 5px #ffaa33;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .menu-card {
+      background: linear-gradient(145deg, #1e2a2a, #0a1217);
+      border-radius: 48px;
+      padding: 32px;
+      text-align: center;
+      width: 320px;
+      border: 2px solid #ffcc44;
+      box-shadow: 0 0 40px rgba(255,204,68,0.3);
+    }
+
+    .menu-card h1 {
+      font-size: 2rem;
+      color: #ffcc44;
+      text-shadow: 2px 2px 0 #7a3a1a;
+      margin-bottom: 16px;
+      font-family: 'Orbitron', monospace;
+    }
+
+    .menu-card p {
+      color: #ddd;
+      font-size: 0.9rem;
+      margin: 8px 0;
+    }
+
+    .menu-card input {
+      background: #2a2418;
+      border: 2px solid #ffcc44;
+      padding: 12px;
+      width: 100%;
+      margin: 12px 0;
+      color: #ffdd99;
+      font-size: 1rem;
+      text-align: center;
+      border-radius: 60px;
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    .menu-card button {
+      background: #ffcc44;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      font-size: 1.2rem;
+      font-weight: bold;
+      font-family: 'Orbitron', monospace;
+      border-radius: 60px;
+      color: #1e1a0c;
+      margin-top: 12px;
+      cursor: pointer;
+      transition: transform 0.1s;
+      box-shadow: 0 4px 0 #7a3a1a;
+    }
+
+    .menu-card button:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #7a3a1a;
+    }
+
+    .best-score {
+      margin-top: 20px;
+      color: #ffcc44;
+    }
+
+    .footer-tip {
+      margin-top: 20px;
+      font-size: 0.7rem;
+      color: #aaa;
+    }
+
+    @media (max-width: 550px) {
+      .stat span:last-child { font-size: 1.2rem; min-width: 40px; }
+      .stat span:first-child { font-size: 1rem; }
+      canvas { width: 280px; height: 280px; }
+      .simon-container { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="game-wrapper">
+  <div class="simon-container">
+    <canvas id="simonCanvas" width="400" height="400"></canvas>
+  </div>
+  <div class="info-panel">
+    <div class="stat"><span>🎯 RONDA</span><span id="roundValue">0</span></div>
+    <div class="stat"><span>🏆 MEJOR</span><span id="bestValue">0</span></div>
+  </div>
+</div>
+
+<div id="menuOverlay" class="menu-overlay">
+  <div class="menu-card">
+    <h1>🎵 SIMON SAYS</h1>
+    <p>¡Memoriza la secuencia de colores y sonidos!</p>
+    <p><strong>🎮 CÓMO JUGAR:</strong> Observa la secuencia, luego repite tocando los colores en el mismo orden. Cada ronda suma un color más. ¡Cuidado con el orden!</p>
+    <input type="text" id="playerName" maxlength="12" placeholder="TU NOMBRE" value="SIMON">
+    <button id="startBtn">✨ COMENZAR JUEGO ✨</button>
+    <div class="best-score">🏆 RÉCORD DE RONDAS: <span id="menuBest">0</span></div>
+    <div class="footer-tip">Toca los colores | Sigue la secuencia | ¡Concentración!</div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    // ---------- CANVAS ----------
+    const canvas = document.getElementById('simonCanvas');
+    const ctx = canvas.getContext('2d');
+    const size = 400;
+    canvas.width = size;
+    canvas.height = size;
+
+    // Colores y posiciones (4 botones en forma de círculo)
+    const colors = [
+      { name: "ROJO",  color: "#e74c3c", light: "#ff6b5a", soundFreq: 523.25,  angleStart: 0,    angleEnd: Math.PI/2 },
+      { name: "VERDE", color: "#2ecc71", light: "#5bea8f", soundFreq: 587.33,  angleStart: Math.PI/2, angleEnd: Math.PI },
+      { name: "AMARILLO", color: "#f1c40f", light: "#ffdd66", soundFreq: 659.25, angleStart: Math.PI, angleEnd: 3*Math.PI/2 },
+      { name: "AZUL",  color: "#3498db", light: "#5dade2", soundFreq: 698.46,  angleStart: 3*Math.PI/2, angleEnd: 2*Math.PI }
+    ];
+    
+    // Centro y radio
+    const centerX = size/2, centerY = size/2;
+    const radius = 140;
+    const innerRadius = 70;
+    
+    // Estado del juego
+    let gameActive = false;
+    let sequence = [];        // secuencia de colores (índices)
+    let playerSequence = [];
+    let round = 0;
+    let bestScore = 0;
+    let waitingForPlayer = false;
+    let canClick = false;
+    let highlightTimeout = null;
+    
+    // Sonido
+    let audioCtx = null;
+    let soundEnabled = true;
+    
+    // Elementos DOM
+    const roundSpan = document.getElementById('roundValue');
+    const bestSpan = document.getElementById('bestValue');
+    const menuBestSpan = document.getElementById('menuBest');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const startBtn = document.getElementById('startBtn');
+    const playerNameInput = document.getElementById('playerName');
+    
+    // Cargar mejor puntuación
+    try {
+      let stored = localStorage.getItem('simon_best');
+      if(stored) bestScore = parseInt(stored);
+      bestSpan.innerText = bestScore;
+      menuBestSpan.innerText = bestScore;
+    } catch(e) {}
+    
+    // ---------- AUDIO ----------
+    function initAudio() {
+      if(!audioCtx && soundEnabled) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) { console.warn("Audio no soportado"); }
+      }
+    }
+    
+    function playTone(freq, duration = 0.25) {
+      if(!soundEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      osc.start();
+      osc.stop(now + duration);
+    }
+    
+    function playError() {
+      if(!soundEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 220;
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now+0.4);
+      osc.start();
+      osc.stop(now+0.35);
+    }
+    
+    // ---------- DIBUJO DE LOS BOTONES ----------
+    function drawButton(angleStart, angleEnd, color, lightColor, isHighlighted = false) {
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, angleStart, angleEnd);
+      ctx.arc(centerX, centerY, innerRadius, angleEnd, angleStart, true);
+      ctx.closePath();
+      ctx.fillStyle = isHighlighted ? lightColor : color;
+      ctx.fill();
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // Sombra sutil
+      ctx.shadowBlur = 0;
+    }
+    
+    function draw() {
+      ctx.clearRect(0,0,size,size);
+      // Fondo central
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, innerRadius-5, 0, 2*Math.PI);
+      ctx.fillStyle = "#1a1a2a";
+      ctx.fill();
+      ctx.fillStyle = "#ffcc44";
+      ctx.font = "bold 28px 'Orbitron', monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("SIMON", centerX, centerY);
+      
+      // Dibujar los 4 botones
+      for(let i=0; i<colors.length; i++) {
+        let col = colors[i];
+        let highlight = false;
+        drawButton(col.angleStart, col.angleEnd, col.color, col.light, highlight);
+      }
+    }
+    
+    function highlightButton(index, callback) {
+      let col = colors[index];
+      // Redibujar con el botón iluminado
+      function drawHighlight() {
+        ctx.clearRect(0,0,size,size);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, innerRadius-5, 0, 2*Math.PI);
+        ctx.fillStyle = "#1a1a2a";
+        ctx.fill();
+        ctx.fillStyle = "#ffcc44";
+        ctx.font = "bold 28px 'Orbitron', monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("SIMON", centerX, centerY);
+        
+        for(let i=0; i<colors.length; i++) {
+          let c = colors[i];
+          let isHighlight = (i === index);
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, c.angleStart, c.angleEnd);
+          ctx.arc(centerX, centerY, innerRadius, c.angleEnd, c.angleStart, true);
+          ctx.closePath();
+          ctx.fillStyle = isHighlight ? c.light : c.color;
+          ctx.fill();
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+      drawHighlight();
+      playTone(col.soundFreq, 0.2);
+      setTimeout(() => {
+        draw();
+        if(callback) callback();
+      }, 250);
+    }
+    
+    // ---------- LÓGICA DEL JUEGO ----------
+    function addToSequence() {
+      let newColor = Math.floor(Math.random() * colors.length);
+      sequence.push(newColor);
+      round = sequence.length;
+      roundSpan.innerText = round;
+      if(round > bestScore) {
+        bestScore = round;
+        bestSpan.innerText = bestScore;
+        menuBestSpan.innerText = bestScore;
+        localStorage.setItem('simon_best', bestScore);
+      }
+    }
+    
+    function playSequence(index = 0) {
+      if(!gameActive) return;
+      if(index >= sequence.length) {
+        waitingForPlayer = true;
+        canClick = true;
+        return;
+      }
+      let colorIdx = sequence[index];
+      highlightButton(colorIdx, () => {
+        setTimeout(() => {
+          playSequence(index + 1);
+        }, 200);
+      });
+    }
+    
+    function startRound() {
+      waitingForPlayer = false;
+      canClick = false;
+      playerSequence = [];
+      addToSequence();
+      setTimeout(() => {
+        if(gameActive) playSequence(0);
+      }, 500);
+    }
+    
+    function gameOver() {
+      gameActive = false;
+      waitingForPlayer = false;
+      canClick = false;
+      playError();
+      draw();
+      ctx.font = "bold 24px monospace";
+      ctx.fillStyle = "#ff4444";
+      ctx.shadowBlur = 0;
+      ctx.fillText("GAME OVER", centerX-80, centerY+60);
+      setTimeout(() => {
+        if(!gameActive) draw();
+      }, 1500);
+      setTimeout(() => {
+        if(!gameActive) showMenu();
+      }, 2000);
+    }
+    
+    function checkPlayerMove(colorIndex) {
+      if(!gameActive || !waitingForPlayer || !canClick) return false;
+      
+      // Reproducir sonido del botón
+      playTone(colors[colorIndex].soundFreq, 0.15);
+      highlightButton(colorIndex, () => {});
+      
+      playerSequence.push(colorIndex);
+      let expectedIndex = playerSequence.length - 1;
+      if(playerSequence[expectedIndex] !== sequence[expectedIndex]) {
+        gameOver();
+        return false;
+      }
+      
+      if(playerSequence.length === sequence.length) {
+        // Ronda completada
+        waitingForPlayer = false;
+        canClick = false;
+        setTimeout(() => {
+          if(gameActive) startRound();
+        }, 800);
+      }
+      return true;
+    }
+    
+    // ---------- DETECCIÓN DE TOQUE EN LOS BOTONES ----------
+    function getColorIndexFromClick(x, y) {
+      let dx = x - centerX;
+      let dy = y - centerY;
+      let distance = Math.hypot(dx, dy);
+      if(distance < innerRadius || distance > radius) return -1;
+      let angle = Math.atan2(dy, dx);
+      if(angle < 0) angle += 2*Math.PI;
+      for(let i=0; i<colors.length; i++) {
+        if(angle >= colors[i].angleStart && angle < colors[i].angleEnd) {
+          return i;
+        }
+      }
+      return -1;
+    }
+    
+    function handleTap(e) {
+      if(!gameActive) return;
+      if(!waitingForPlayer || !canClick) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      let clientX, clientY;
+      if(e.touches) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+        e.preventDefault();
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+      
+      let canvasX = (clientX - rect.left) * scaleX;
+      let canvasY = (clientY - rect.top) * scaleY;
+      let colorIndex = getColorIndexFromClick(canvasX, canvasY);
+      if(colorIndex !== -1) {
+        checkPlayerMove(colorIndex);
+      }
+    }
+    
+    // ---------- RESET Y MENÚ ----------
+    function resetGame() {
+      sequence = [];
+      playerSequence = [];
+      round = 0;
+      gameActive = true;
+      waitingForPlayer = false;
+      canClick = false;
+      roundSpan.innerText = "0";
+      draw();
+      startRound();
+    }
+    
+    function startGame() {
+      initAudio();
+      if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      resetGame();
+      menuOverlay.style.display = 'none';
+    }
+    
+    function showMenu() {
+      gameActive = false;
+      menuOverlay.style.display = 'flex';
+      bestSpan.innerText = bestScore;
+      menuBestSpan.innerText = bestScore;
+      draw();
+    }
+    
+    // ---------- EVENTOS ----------
+    canvas.addEventListener('click', handleTap);
+    canvas.addEventListener('touchstart', handleTap, {passive: false});
+    
+    startBtn.addEventListener('click', () => {
+      let name = playerNameInput.value.trim();
+      if(name === "") name = "SIMON";
+      startGame();
+    });
+    
+    canvas.addEventListener('contextmenu', (e)=>e.preventDefault());
+    
+    // Tecla espacio para empezar desde menú
+    window.addEventListener('keydown', (e) => {
+      if(e.code === 'Space' && !gameActive && menuOverlay.style.display !== 'none') {
+        e.preventDefault();
+        startGame();
+      }
+      if(e.key === 'm' || e.key === 'M') {
+        soundEnabled = !soundEnabled;
+        if(soundEnabled && !audioCtx) initAudio();
+      }
+    });
+    
+    // Inicializar dibujo y menú
+    draw();
+    showMenu();
+  })();
+</script>
+</body>
+</html>
+```
