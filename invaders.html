@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NEO STRIKER - Control Total por Tacto/Flechas</title>
+    <title>NEO STRIKER - Batalla Espacial</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,7 @@
             justify-content: center;
             align-items: center;
             font-family: 'Segoe UI', 'Orbitron', 'Courier New', monospace;
-            touch-action: none; /* Evita scroll al tocar el canvas */
+            touch-action: none;
             padding: 16px;
         }
 
@@ -38,7 +38,7 @@
             border-radius: 32px;
             box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.4), 0 10px 30px rgba(0,0,0,0.5);
             cursor: none;
-            touch-action: none; /* Mejor control táctil */
+            touch-action: none;
         }
 
         .info-panel {
@@ -160,10 +160,10 @@
         </div>
         <div class="controls-row">
             <button id="resetButton">🔄 REINICIAR</button>
-            <div class="status" id="gameStatusText">🛸 MODO LIBRE 🛸</div>
+            <div class="status" id="gameStatusText">🛸 BATALLA ESPACIAL 🛸</div>
         </div>
         <div class="instructions">
-            🖥️ PC: FLECHAS para mover | CLICK o ESPACIO para DISPARAR RECTO<br>
+            🖥️ PC: FLECHAS para mover | CLICK o ESPACIO para DISPARAR<br>
             📱 MÓVIL: ARRASTRA el dedo para MOVER | TOCA para DISPARAR
         </div>
     </div>
@@ -183,7 +183,7 @@
         let invincibilityFrames = 0;
         const INVINCIBLE_DURATION = 45;
         
-        // ---------- NAVE JUGADOR ----------
+        // ---------- NAVE JUGADOR (Diseño mejorado) ----------
         let player = {
             x: W/2,
             y: H - 70,
@@ -191,21 +191,21 @@
             speed: 6.5
         };
         
-        // Estados de teclas (PC)
+        // Estados de teclas
         const keys = {
             ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false
         };
         
-        // Control táctil (móvil)
+        // Control táctil
         let touchActive = false;
         let touchX = 0, touchY = 0;
         
-        // ---------- DISPAROS (RECTOS HACIA ARRIBA) ----------
+        // ---------- DISPAROS ----------
         let bullets = [];
         let shootCooldown = 0;
         const SHOOT_DELAY_FRAMES = 6;
         
-        // ---------- ENEMIGOS ----------
+        // ---------- ENEMIGOS (Naves con diferentes tamaños) ----------
         let enemies = [];
         let enemySpawnCounter = 0;
         let baseSpawnDelay = 32;
@@ -214,22 +214,27 @@
         let explosions = [];
         let messages = [];
         
+        // Clase de nave enemiga mejorada
         class Enemy {
-            constructor(x, y, speedY, size, hp, type) {
+            constructor(x, y, speedY, size, hp, type, variant) {
                 this.x = x;
                 this.y = y;
                 this.speedY = speedY;
                 this.size = size;
                 this.hp = hp;
-                this.type = type;
+                this.type = type;     // 0:caza, 1:acorazado, 2:interceptor
+                this.variant = variant; // variante de diseño
+                this.angle = 0;
+                this.wingAngle = 0;
             }
         }
         
         class Explosion {
-            constructor(x, y) {
+            constructor(x, y, big = false) {
                 this.x = x;
                 this.y = y;
                 this.life = 14;
+                this.big = big;
             }
         }
         
@@ -262,46 +267,49 @@
             setTimeout(() => livesSpan.classList.remove('life-lost'), 300);
         }
         
-        // ---------- SPAWN ENEMIGOS ----------
+        // ---------- SPAWN DE NAVES ENEMIGAS (Diferentes tamaños y diseños) ----------
         function spawnEnemy() {
             if(!gameActive) return;
             let r = Math.random();
             let type = 0;
-            let size = 18;
+            let size = 0;
             let hp = 1;
-            let speedY = 3.0;
-            if(r < 0.2) {
+            let speedY = 0;
+            let variant = Math.floor(Math.random() * 3); // 0,1,2 para variantes visuales
+            
+            if(r < 0.2) {        // 20% Acorazado (GRANDE)
                 type = 1;
-                size = 28;
+                size = 32;
                 hp = 3;
-                speedY = 1.9;
-            } else if(r < 0.35) {
+                speedY = 1.6;
+            } else if(r < 0.4) { // 20% Interceptor (MEDIANO-rápido)
                 type = 2;
-                size = 15;
+                size = 18;
                 hp = 1;
-                speedY = 4.8;
-            } else {
+                speedY = 4.2;
+            } else {              // 60% Caza estándar (PEQUEÑO-MEDIANO)
                 type = 0;
-                size = 20;
+                size = 22;
                 hp = 1;
-                speedY = 3.2;
+                speedY = 2.8;
             }
-            let margin = size + 10;
+            
+            let margin = size + 15;
             let x = margin + Math.random() * (W - margin * 2);
-            let y = -size - Math.random() * 40;
-            enemies.push(new Enemy(x, y, speedY, size, hp, type));
+            let y = -size - Math.random() * 50;
+            enemies.push(new Enemy(x, y, speedY, size, hp, type, variant));
         }
         
-        // ---------- DISPARO RECTO ----------
+        // ---------- DISPARO ----------
         function shootStraight() {
             if(!gameActive) return false;
             if(shootCooldown > 0) return false;
             
             bullets.push({
                 x: player.x,
-                y: player.y - 10,
+                y: player.y - 12,
                 vx: 0,
-                vy: -13,
+                vy: -14,
                 radius: 5
             });
             shootCooldown = SHOOT_DELAY_FRAMES;
@@ -321,28 +329,212 @@
                 gameActive = false;
                 document.getElementById('gameStatusText').innerHTML = '💀 GAME OVER 💀';
                 document.getElementById('gameStatusText').style.color = "#ff7777";
-                for(let k=0;k<20;k++) explosions.push(new Explosion(player.x + (Math.random()-0.5)*60, player.y + (Math.random()-0.5)*60));
+                for(let k=0;k<25;k++) explosions.push(new Explosion(player.x + (Math.random()-0.5)*60, player.y + (Math.random()-0.5)*60, true));
             } else {
                 invincibilityFrames = INVINCIBLE_DURATION;
                 messages.push(new FloatingMessage(player.x, player.y - 30, "¡-1 VIDA!"));
-                for(let k=0;k<8;k++) explosions.push(new Explosion(player.x + (Math.random()-0.5)*40, player.y + (Math.random()-0.5)*40));
+                for(let k=0;k<10;k++) explosions.push(new Explosion(player.x + (Math.random()-0.5)*40, player.y + (Math.random()-0.5)*40));
             }
         }
         
-        // ---------- ACTUALIZACIÓN ----------
+        // ---------- DIBUJAR NAVE JUGADOR (Estilo caza espacial) ----------
+        function drawPlayerShip(x, y, radius, invincible) {
+            if(invincible && (Math.floor(Date.now() / 50) % 4 < 2)) return;
+            
+            ctx.save();
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = "#0af";
+            
+            // Cuerpo principal
+            ctx.beginPath();
+            ctx.moveTo(x, y - radius);
+            ctx.lineTo(x - radius * 0.7, y + radius * 0.3);
+            ctx.lineTo(x - radius * 0.3, y + radius * 0.1);
+            ctx.lineTo(x - radius * 0.3, y + radius * 0.6);
+            ctx.lineTo(x, y + radius * 0.4);
+            ctx.lineTo(x + radius * 0.3, y + radius * 0.6);
+            ctx.lineTo(x + radius * 0.3, y + radius * 0.1);
+            ctx.lineTo(x + radius * 0.7, y + radius * 0.3);
+            ctx.closePath();
+            
+            const grad = ctx.createLinearGradient(x - 10, y - 15, x + 10, y + 15);
+            grad.addColorStop(0, "#2ccbff");
+            grad.addColorStop(1, "#0088cc");
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.strokeStyle = "#88ffff";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Alas laterales
+            ctx.beginPath();
+            ctx.moveTo(x - radius * 0.7, y + radius * 0.3);
+            ctx.lineTo(x - radius * 1.1, y + radius * 0.5);
+            ctx.lineTo(x - radius * 0.5, y + radius * 0.4);
+            ctx.fillStyle = "#1a9acc";
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(x + radius * 0.7, y + radius * 0.3);
+            ctx.lineTo(x + radius * 1.1, y + radius * 0.5);
+            ctx.lineTo(x + radius * 0.5, y + radius * 0.4);
+            ctx.fill();
+            
+            // Cabina
+            ctx.beginPath();
+            ctx.arc(x, y - radius * 0.4, radius * 0.25, 0, Math.PI * 2);
+            ctx.fillStyle = "#88ddff";
+            ctx.fill();
+            ctx.fillStyle = "#44aaff";
+            ctx.beginPath();
+            ctx.arc(x, y - radius * 0.45, radius * 0.12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Motor (glow)
+            ctx.beginPath();
+            ctx.moveTo(x - 8, y + radius * 0.5);
+            ctx.lineTo(x, y + radius * 0.8);
+            ctx.lineTo(x + 8, y + radius * 0.5);
+            ctx.fillStyle = "#ff6600";
+            ctx.fill();
+            
+            ctx.restore();
+        }
+        
+        // ---------- DIBUJAR NAVE ENEMIGA (Diferentes diseños según tipo) ----------
+        function drawEnemyShip(e) {
+            ctx.save();
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = "#ff3366";
+            
+            const x = e.x, y = e.y, size = e.size;
+            
+            if(e.type === 0) { // CAZA (diseño triangular/ala delta)
+                const grad = ctx.createLinearGradient(x - 10, y - 8, x + 10, y + 8);
+                grad.addColorStop(0, "#b52e6e");
+                grad.addColorStop(1, "#8b1a4a");
+                ctx.fillStyle = grad;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y - size * 0.7);
+                ctx.lineTo(x - size * 0.8, y + size * 0.3);
+                ctx.lineTo(x - size * 0.4, y + size * 0.1);
+                ctx.lineTo(x - size * 0.4, y + size * 0.5);
+                ctx.lineTo(x, y + size * 0.3);
+                ctx.lineTo(x + size * 0.4, y + size * 0.5);
+                ctx.lineTo(x + size * 0.4, y + size * 0.1);
+                ctx.lineTo(x + size * 0.8, y + size * 0.3);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = "#ff6699";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                
+                // Alas puntiagudas
+                ctx.beginPath();
+                ctx.moveTo(x - size * 0.8, y + size * 0.3);
+                ctx.lineTo(x - size * 1.0, y + size * 0.6);
+                ctx.lineTo(x - size * 0.5, y + size * 0.4);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(x + size * 0.8, y + size * 0.3);
+                ctx.lineTo(x + size * 1.0, y + size * 0.6);
+                ctx.lineTo(x + size * 0.5, y + size * 0.4);
+                ctx.fill();
+                
+                // Ojos rojos
+                ctx.fillStyle = "#ff0000";
+                ctx.beginPath();
+                ctx.arc(x - 5, y - 3, 3, 0, Math.PI * 2);
+                ctx.arc(x + 5, y - 3, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+            } else if(e.type === 1) { // ACORAZADO (grande, forma de nave nodriza)
+                const grad = ctx.createLinearGradient(x - 15, y - 10, x + 15, y + 10);
+                grad.addColorStop(0, "#c95a1c");
+                grad.addColorStop(1, "#8b3a0c");
+                ctx.fillStyle = grad;
+                
+                ctx.beginPath();
+                ctx.ellipse(x, y, size * 0.8, size * 0.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.rect(x - size * 0.6, y - size * 0.3, size * 1.2, size * 0.4);
+                ctx.fill();
+                
+                // Torretas laterales
+                ctx.fillStyle = "#aa6633";
+                ctx.beginPath();
+                ctx.rect(x - size * 0.9, y - 5, 8, 10);
+                ctx.rect(x + size * 0.7, y - 5, 8, 10);
+                ctx.fill();
+                
+                // Ojos grandes
+                ctx.fillStyle = "#ff4422";
+                ctx.beginPath();
+                ctx.arc(x - 8, y - 4, 4, 0, Math.PI * 2);
+                ctx.arc(x + 8, y - 4, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#ffff00";
+                ctx.beginPath();
+                ctx.arc(x - 7, y - 5, 2, 0, Math.PI * 2);
+                ctx.arc(x + 9, y - 5, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Barra de vida
+                ctx.fillStyle = "#aa66ff";
+                ctx.fillRect(x - size * 0.6, y - size * 0.7, size * 1.2, 6);
+                ctx.fillStyle = "#55ff77";
+                ctx.fillRect(x - size * 0.6, y - size * 0.7, (size * 1.2) * (e.hp / 3), 6);
+                
+            } else { // INTERCEPTOR (rápido, forma de dardo)
+                const grad = ctx.createLinearGradient(x - 8, y - 10, x + 8, y + 10);
+                grad.addColorStop(0, "#7a3a9e");
+                grad.addColorStop(1, "#4a1a6e");
+                ctx.fillStyle = grad;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y - size * 0.6);
+                ctx.lineTo(x - size * 0.5, y + size * 0.2);
+                ctx.lineTo(x - size * 0.2, y + size * 0.4);
+                ctx.lineTo(x, y + size * 0.1);
+                ctx.lineTo(x + size * 0.2, y + size * 0.4);
+                ctx.lineTo(x + size * 0.5, y + size * 0.2);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Estela de energía
+                ctx.beginPath();
+                ctx.moveTo(x - 4, y + size * 0.3);
+                ctx.lineTo(x, y + size * 0.7);
+                ctx.lineTo(x + 4, y + size * 0.3);
+                ctx.fillStyle = "#ff44aa";
+                ctx.fill();
+                
+                // Ojos morados
+                ctx.fillStyle = "#ff88ff";
+                ctx.beginPath();
+                ctx.arc(x - 4, y - 2, 2.5, 0, Math.PI * 2);
+                ctx.arc(x + 4, y - 2, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+        
+        // ---------- ACTUALIZACIÓN DEL JUEGO ----------
         function updateGame() {
             if(!gameActive) return;
             
-            // 1. Movimiento nave (PC: teclas)
+            // Movimiento nave
             let moveX = 0, moveY = 0;
             if(keys.ArrowLeft) moveX = -1;
             if(keys.ArrowRight) moveX = 1;
             if(keys.ArrowUp) moveY = -1;
             if(keys.ArrowDown) moveY = 1;
             
-            // Movimiento táctil (móvil) - tiene prioridad si está activo
             if(touchActive) {
-                // Convertir coordenadas táctiles a posición del canvas
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;
                 const scaleY = canvas.height / rect.height;
@@ -353,7 +545,6 @@
                 player.x = canvasX;
                 player.y = canvasY;
             } else {
-                // Movimiento con teclado
                 if(moveX !== 0 || moveY !== 0) {
                     let len = Math.hypot(moveX, moveY);
                     moveX /= len;
@@ -365,11 +556,10 @@
                 player.y = Math.min(Math.max(newY, player.radius + 30), H - player.radius - 10);
             }
             
-            // 2. Cooldowns
             if(shootCooldown > 0) shootCooldown--;
             if(invincibilityFrames > 0) invincibilityFrames--;
             
-            // 3. Spawn enemigos
+            // Spawn enemigos
             if(enemySpawnCounter <= 0) {
                 let tiempoFactor = Math.min(0.65, (60 - timeLeft) / 100);
                 let delayActual = Math.max(18, Math.floor(baseSpawnDelay * (1 - tiempoFactor * 0.3)));
@@ -380,7 +570,7 @@
                 enemySpawnCounter--;
             }
             
-            // 4. Mover balas
+            // Mover balas
             for(let i=0; i<bullets.length; i++) {
                 bullets[i].x += bullets[i].vx;
                 bullets[i].y += bullets[i].vy;
@@ -391,7 +581,7 @@
                 }
             }
             
-            // 5. Colisiones balas vs enemigos
+            // Mover enemigos y colisiones
             for(let i=0; i<enemies.length; i++) {
                 const e = enemies[i];
                 e.y += e.speedY;
@@ -410,7 +600,7 @@
                             score += puntos;
                             updateUI();
                             messages.push(new FloatingMessage(e.x, e.y, `+${puntos}`));
-                            explosions.push(new Explosion(e.x, e.y));
+                            explosions.push(new Explosion(e.x, e.y, e.type === 1));
                             enemies.splice(i,1);
                             i--;
                             break;
@@ -419,7 +609,7 @@
                 }
             }
             
-            // 6. Colisión nave vs enemigos
+            // Colisión con jugador
             for(let i=0; i<enemies.length; i++) {
                 const e = enemies[i];
                 const dist = Math.hypot(player.x - e.x, player.y - e.y);
@@ -439,7 +629,7 @@
                 }
             }
             
-            // 7. Actualizar efectos
+            // Actualizar explosiones
             for(let i=0; i<explosions.length; i++) {
                 explosions[i].life--;
                 if(explosions[i].life <= 0) {
@@ -448,6 +638,7 @@
                 }
             }
             
+            // Actualizar mensajes
             for(let i=0; i<messages.length; i++) {
                 messages[i].life--;
                 messages[i].y -= 1.2;
@@ -457,13 +648,13 @@
                 }
             }
             
-            // 8. Victoria
+            // Victoria
             if(timeLeft <= 0 && gameActive) {
                 gameActive = false;
                 document.getElementById('gameStatusText').innerHTML = '🏆 ¡VICTORIA! 🏆';
                 document.getElementById('gameStatusText').style.color = "#aaffcc";
-                for(let i=0;i<35;i++) explosions.push(new Explosion(player.x + (Math.random()-0.5)*100, player.y + (Math.random()-0.5)*80));
-                messages.push(new FloatingMessage(W/2, H/2, "¡COMPLETADO!"));
+                for(let i=0;i<40;i++) explosions.push(new Explosion(player.x + (Math.random()-0.5)*100, player.y + (Math.random()-0.5)*80, true));
+                messages.push(new FloatingMessage(W/2, H/2, "¡MISIÓN COMPLETADA!"));
             }
         }
         
@@ -482,127 +673,89 @@
                     if(timeLeft <= 10) {
                         document.getElementById('gameStatusText').innerHTML = "⚠️ ¡ÚLTIMO ESFUERZO! ⚠️";
                     } else {
-                        if(gameActive) document.getElementById('gameStatusText').innerHTML = "🛸 COMBATE ESTELAR 🛸";
+                        if(gameActive) document.getElementById('gameStatusText').innerHTML = "🛸 BATALLA ESPACIAL 🛸";
                     }
                 }
                 lastSecondMark = nowSec;
             }
         }
         
-        // ========== DIBUJO ==========
+        // ========== DIBUJO PRINCIPAL ==========
         function draw() {
             ctx.clearRect(0,0,W,H);
-            // Fondo
-            const starShift = (performance.now() * 0.1) % 200;
+            
+            // Fondo espacial dinámico
+            const starShift = (performance.now() * 0.05) % 200;
             ctx.fillStyle = "#03061c";
             ctx.fillRect(0,0,W,H);
-            for(let i=0;i<300;i++) {
+            
+            // Estrellas
+            for(let i=0;i<400;i++) {
                 let sx = (i * 131) % W;
                 let sy = (i * 253 + starShift) % H;
-                ctx.fillStyle = `rgba(255,240,200,${0.3+Math.sin(i+performance.now()*0.003)*0.2})`;
-                ctx.fillRect(sx, sy, 2,2);
+                let brightness = 0.3 + Math.sin(i + performance.now() * 0.003) * 0.2;
+                ctx.fillStyle = `rgba(255,240,200,${brightness})`;
+                ctx.fillRect(sx, sy, (i%3)+1, (i%3)+1);
             }
+            
+            // Nebulosa de fondo
+            ctx.globalAlpha = 0.3;
+            for(let n=0; n<3; n++) {
+                ctx.beginPath();
+                ctx.ellipse(W*0.2 + n*300, H*0.3, 150, 80, 0, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(100, 50, 150, 0.1)`;
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
             
             // Líneas warp
-            for(let l=0; l<20; l++) {
-                let offset = (performance.now()*0.5 + l*37) % 180;
+            for(let l=0; l<30; l++) {
+                let offset = (performance.now()*0.3 + l*47) % 200;
                 ctx.beginPath();
-                ctx.moveTo(50+l*45, 0);
-                ctx.lineTo(30+l*38, H);
-                ctx.strokeStyle = `rgba(0,180,255,0.12)`;
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-            }
-            
-            // Nave jugador
-            let drawPlayer = true;
-            if(invincibilityFrames > 0 && (Math.floor(Date.now() / 50) % 4 < 2)) {
-                drawPlayer = false;
-            }
-            if(drawPlayer) {
-                ctx.shadowBlur = 14;
-                ctx.shadowColor = "#0af";
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, player.radius-2, 0, Math.PI*2);
-                ctx.fillStyle = "#22ccffcc";
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, player.radius-8, 0, Math.PI*2);
-                ctx.fillStyle = "#ffe484";
-                ctx.fill();
-                ctx.beginPath();
-                ctx.moveTo(player.x, player.y-22);
-                ctx.lineTo(player.x-11, player.y-6);
-                ctx.lineTo(player.x+11, player.y-6);
-                ctx.fillStyle = "#ffaa44";
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(player.x, player.y, player.radius, 0, Math.PI*2);
-                ctx.strokeStyle = "#88ffff";
-                ctx.lineWidth = 2.5;
+                ctx.moveTo(30+l*35, 0);
+                ctx.lineTo(20+l*32, H);
+                ctx.strokeStyle = `rgba(0,180,255,0.08)`;
+                ctx.lineWidth = 1;
                 ctx.stroke();
             }
             
             // Disparos
             for(let b of bullets) {
                 ctx.beginPath();
-                ctx.arc(b.x, b.y, 5, 0, Math.PI*2);
+                ctx.arc(b.x, b.y, 4, 0, Math.PI*2);
                 ctx.fillStyle = "#ff44ff";
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(b.x, b.y, 2.5, 0, Math.PI*2);
+                ctx.arc(b.x, b.y, 2, 0, Math.PI*2);
                 ctx.fillStyle = "white";
                 ctx.fill();
             }
             
             // Enemigos
             for(let e of enemies) {
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = "#ff3366";
-                ctx.beginPath();
-                ctx.ellipse(e.x, e.y, e.size, e.size*0.7, 0, 0, Math.PI*2);
-                let grad = ctx.createLinearGradient(e.x-10, e.y-5, e.x+10, e.y+8);
-                if(e.type===0) grad.addColorStop(0,"#b52e6e");
-                else if(e.type===1) grad.addColorStop(0,"#c95a1c");
-                else grad.addColorStop(0,"#7a3a9e");
-                grad.addColorStop(1,"#4a1a3a");
-                ctx.fillStyle = grad;
-                ctx.fill();
-                ctx.beginPath();
-                ctx.moveTo(e.x, e.y-e.size*0.6);
-                ctx.lineTo(e.x-e.size*0.55, e.y);
-                ctx.lineTo(e.x+e.size*0.55, e.y);
-                ctx.fillStyle = "#ed6a9e";
-                ctx.fill();
-                ctx.fillStyle = "#ffdd88";
-                ctx.beginPath();
-                ctx.arc(e.x-5, e.y-3, 3, 0, Math.PI*2);
-                ctx.arc(e.x+5, e.y-3, 3, 0, Math.PI*2);
-                ctx.fill();
-                if(e.type === 1) {
-                    ctx.fillStyle = "#aa66ff";
-                    ctx.fillRect(e.x-15, e.y-e.size-5, 30, 6);
-                    ctx.fillStyle = "#55ff77";
-                    ctx.fillRect(e.x-15, e.y-e.size-5, 10 * e.hp, 6);
-                }
+                drawEnemyShip(e);
             }
+            
+            // Jugador
+            drawPlayerShip(player.x, player.y, player.radius, invincibilityFrames > 0);
             
             // Explosiones
             for(let ex of explosions) {
                 let a = ex.life/14;
+                let radius = ex.big ? 15*(1-a)+5 : 8*(1-a)+3;
                 ctx.beginPath();
-                ctx.arc(ex.x, ex.y, 8*(1-a)+3, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(255, 80, 30, ${a*0.9})`;
+                ctx.arc(ex.x, ex.y, radius, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255, 100, 30, ${a*0.9})`;
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(ex.x-2, ex.y-1, 3, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(255,200,50,${a})`;
+                ctx.arc(ex.x-3, ex.y-2, radius*0.4, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255,220,50,${a})`;
                 ctx.fill();
             }
             
             // Mensajes flotantes
             for(let msg of messages) {
-                ctx.font = "bold 20 'Orbitron'";
+                ctx.font = "bold 22 'Orbitron'";
                 ctx.fillStyle = `rgba(255, 255, 100, ${msg.life/30})`;
                 ctx.shadowBlur = 0;
                 ctx.fillText(msg.text, msg.x-15, msg.y);
@@ -611,17 +764,18 @@
             // Mira
             ctx.shadowBlur = 0;
             ctx.beginPath();
-            ctx.arc(player.x, player.y-8, 18, 0, Math.PI*2);
-            ctx.strokeStyle = "cyan";
-            ctx.lineWidth = 1.8;
-            ctx.setLineDash([6, 10]);
+            ctx.arc(player.x, player.y-10, 20, 0, Math.PI*2);
+            ctx.strokeStyle = "#00ffff";
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 8]);
             ctx.stroke();
             ctx.setLineDash([]);
             
             if(timeLeft <= 5 && gameActive && timeLeft>0){
-                ctx.font = "bold 32 'Orbitron'";
+                ctx.font = "bold 34 'Orbitron'";
                 ctx.fillStyle = "#ff5577";
-                ctx.fillText("¡APRIETA!", W/2-70, 70);
+                ctx.shadowBlur = 8;
+                ctx.fillText("¡EVADE!", W/2-65, 70);
             }
         }
         
@@ -636,7 +790,7 @@
             requestAnimationFrame(gameLoop);
         }
         
-        // ---------- EVENTOS PC ----------
+        // ---------- EVENTOS ----------
         window.addEventListener('keydown', (e) => {
             if(keys.hasOwnProperty(e.key)) {
                 keys[e.key] = true;
@@ -655,7 +809,7 @@
             }
         });
         
-        // ---------- EVENTOS MÓVIL (TOUCH) ----------
+        // Controles táctiles
         function handleTouchStart(e) {
             e.preventDefault();
             touchActive = true;
@@ -677,52 +831,27 @@
             touchActive = false;
         }
         
-        // Disparo con tap (tocar y soltar rápido)
         function handleTouchShoot(e) {
             e.preventDefault();
-            if(gameActive) {
-                shootStraight();
-            }
+            if(gameActive) shootStraight();
         }
         
-        // Disparo con click en PC
-        canvas.addEventListener('click', (e) => {
-            if(gameActive) {
-                shootStraight();
-            }
-        });
-        
-        // Eventos táctiles para movimiento
+        canvas.addEventListener('click', () => { if(gameActive) shootStraight(); });
         canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
         canvas.addEventListener('touchmove', handleTouchMove, {passive: false});
         canvas.addEventListener('touchend', handleTouchEnd);
         canvas.addEventListener('touchcancel', handleTouchEnd);
         
-        // Evento especial para disparo táctil (doble propósito)
-        // Para evitar que cada toque también mueva, usamos un temporizador:
-        let lastTapTime = 0;
-        canvas.addEventListener('touchend', (e) => {
-            const now = Date.now();
-            if(now - lastTapTime < 200) {
-                // Doble tap o tap rápido = disparo
-                handleTouchShoot(e);
-            }
-            lastTapTime = now;
-        });
-        
-        // También permitimos disparo con toque directo sin arrastrar (si no hubo movimiento)
         let touchMoved = false;
         canvas.addEventListener('touchmove', () => { touchMoved = true; });
         canvas.addEventListener('touchstart', () => { touchMoved = false; });
         canvas.addEventListener('touchend', (e) => {
-            if(!touchMoved) {
-                handleTouchShoot(e);
-            }
+            if(!touchMoved) handleTouchShoot(e);
         });
         
         canvas.addEventListener('contextmenu', (e) => e.preventDefault());
         
-        // ---------- RESET ----------
+        // Reset
         document.getElementById('resetButton').addEventListener('click', () => {
             gameActive = true;
             score = 0;
@@ -739,7 +868,7 @@
             player.y = H-70;
             touchActive = false;
             updateUI();
-            document.getElementById('gameStatusText').innerHTML = "🛸 MODO LIBRE 🛸";
+            document.getElementById('gameStatusText').innerHTML = "🛸 BATALLA ESPACIAL 🛸";
             document.getElementById('gameStatusText').style.color = "#ffd966";
             lastSecondMark = 0;
         });
