@@ -1,0 +1,829 @@
+He añadido un nuevo modo de dificultad **Difícil** con mayor velocidad inicial, menos vidas y aumentos de velocidad más agresivos para quienes buscan un verdadero reto. Ahora tienes tres niveles: Fácil (relajado), Media (progresión suave) y Difícil (velocidad alta y pocas vidas). El juego mantiene el temporizador de 60 segundos y la opción de ganar por tiempo o destruyendo todos los ladrillos.
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Arkanoid Time Attack · 3 dificultades</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0a0f1a, #03060c);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Courier New', 'VT323', 'Press Start 2P', monospace;
+      padding: 20px;
+    }
+
+    .game-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .stats-panel {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      border: 2px solid #ffaa44;
+      border-radius: 60px;
+      padding: 12px 24px;
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ffdd99;
+      text-shadow: 2px 2px 0 #5a3a1a;
+    }
+
+    .stat span:first-child {
+      font-size: 1.4rem;
+    }
+
+    .stat span:last-child {
+      background: #2a2a1a;
+      padding: 4px 12px;
+      border-radius: 40px;
+      min-width: 70px;
+      text-align: center;
+    }
+
+    .game-container {
+      position: relative;
+      border-radius: 28px;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.6);
+      background: #000;
+      display: inline-block;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 20px;
+      box-shadow: 0 0 0 4px #ffaa44, 0 0 0 8px #2a2a1a;
+      cursor: none;
+    }
+
+    .touch-controls {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .touch-btn {
+      background: rgba(20,20,30,0.85);
+      backdrop-filter: blur(12px);
+      border: 2px solid #ffaa44;
+      border-radius: 60px;
+      width: 70px;
+      height: 70px;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #ffdd88;
+      text-align: center;
+      line-height: 66px;
+      box-shadow: 0 4px 0 #5a3a1a;
+      transition: 0.05s linear;
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+
+    .touch-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #5a3a1a;
+    }
+
+    @media (min-width: 701px) {
+      .touch-controls {
+        display: none;
+      }
+    }
+
+    .menu-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      border-radius: 20px;
+    }
+
+    .menu-card {
+      background: linear-gradient(145deg, #1e2a2a, #0a1217);
+      border: 4px solid #ffaa44;
+      border-radius: 48px;
+      padding: 28px 24px;
+      text-align: center;
+      width: 320px;
+      box-shadow: 0 0 30px rgba(255,170,68,0.4);
+    }
+
+    .menu-card h1 {
+      font-size: 1.8rem;
+      color: #ffaa44;
+      text-shadow: 3px 3px 0 #7a3a1a;
+      margin-bottom: 16px;
+      font-family: monospace;
+    }
+
+    .menu-card input {
+      background: #2a2418;
+      border: 2px solid #ffaa44;
+      padding: 12px;
+      width: 100%;
+      margin: 12px 0;
+      color: #ffdd99;
+      font-size: 1rem;
+      text-align: center;
+      border-radius: 60px;
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    .difficulty-selector {
+      display: flex;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .difficulty-btn {
+      flex: 1;
+      background: #2a2a1a;
+      border: 2px solid #ffaa44;
+      padding: 8px;
+      border-radius: 40px;
+      color: #ffdd99;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.1s;
+      font-size: 0.8rem;
+    }
+
+    .difficulty-btn.active {
+      background: #ffaa44;
+      color: #1e1a0c;
+      box-shadow: 0 0 8px #ffaa44;
+    }
+
+    .menu-card button {
+      background: #ffaa44;
+      border: none;
+      padding: 12px;
+      width: 100%;
+      font-size: 1.2rem;
+      font-weight: bold;
+      font-family: monospace;
+      border-radius: 60px;
+      color: #1e1a0c;
+      margin-top: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #7a3a1a;
+      transition: 0.05s linear;
+    }
+
+    .menu-card button:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #7a3a1a;
+    }
+
+    .highscore {
+      margin-top: 18px;
+      color: #ffdd99;
+      background: #00000066;
+      padding: 8px;
+      border-radius: 30px;
+    }
+
+    .footer-tip {
+      font-size: 0.7rem;
+      margin-top: 12px;
+      color: #ffcc88;
+    }
+  </style>
+</head>
+<body>
+<div class="game-wrapper">
+  <div class="stats-panel">
+    <div class="stat">
+      <span>💎</span>
+      <span id="scoreValue">0</span>
+    </div>
+    <div class="stat">
+      <span>❤️</span>
+      <span id="livesValue">3</span>
+    </div>
+    <div class="stat">
+      <span>⏱️</span>
+      <span id="timerValue">60</span>
+    </div>
+    <div class="stat">
+      <span>🏆</span>
+      <span id="bestValue">0</span>
+    </div>
+  </div>
+
+  <div class="game-container">
+    <canvas id="arkanoidCanvas" width="500" height="600"></canvas>
+    <div id="menuOverlay" class="menu-overlay">
+      <div class="menu-card">
+        <h1>🧱 TIME ARKANOID</h1>
+        <input type="text" id="playerName" maxlength="12" placeholder="NOMBRE" value="BREAKER">
+        <div class="difficulty-selector">
+          <div id="difficultyEasy" class="difficulty-btn">FÁCIL</div>
+          <div id="difficultyMedium" class="difficulty-btn">MEDIA</div>
+          <div id="difficultyHard" class="difficulty-btn active">DIFÍCIL</div>
+        </div>
+        <button id="startGameBtn">🎮 ¡COMENZAR! 🎮</button>
+        <div class="highscore">🏆 RÉCORD 🏆<br><span id="menuBest">0</span></div>
+        <div class="footer-tip">← → | A/D | TOCA FLECHAS | SOBREVIVE 60 SEGUNDOS</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="touch-controls">
+    <button class="touch-btn" id="leftTouch">◀</button>
+    <button class="touch-btn" id="rightTouch">▶</button>
+  </div>
+</div>
+
+<script>
+  (function(){
+    // ---------- CANVAS ----------
+    const canvas = document.getElementById('arkanoidCanvas');
+    const ctx = canvas.getContext('2d');
+    const width = 500;
+    const height = 600;
+    canvas.width = width;
+    canvas.height = height;
+
+    // ---------- CONSTANTES ----------
+    const PADDLE_HEIGHT = 14;
+    let PADDLE_WIDTH = 80;
+    const PADDLE_Y = height - 40;
+    let paddleX = width/2 - PADDLE_WIDTH/2;
+    
+    const BALL_RADIUS = 6;
+    let ballX = width/2;
+    let ballY = height - 60;
+    let ballVx = 180;
+    let ballVy = -240;
+    
+    // Ladrillos
+    const BRICK_ROWS = 6;
+    const BRICK_COLS = 8;
+    const BRICK_GAP = 4;
+    const BRICK_WIDTH = (width - (BRICK_COLS + 1) * BRICK_GAP) / BRICK_COLS;
+    const BRICK_HEIGHT = 18;
+    let bricks = [];
+    
+    // Estado del juego
+    let score = 0;
+    let lives = 3;
+    let bestScore = 0;
+    let gameActive = false;
+    let lastTimestamp = 0;
+    let difficulty = 'hard';   // 'easy', 'medium', 'hard'
+    
+    // Temporizador (60 segundos)
+    let timeLeft = 60.0;
+    let timerInterval = null;
+    
+    // Parámetros de dificultad
+    let speedIncreaseInterval = 10;   // segundos entre aumentos
+    let speedIncreaseAmount = 30;      // aumento por etapa
+    let baseBallSpeed = 200;
+    let paddleWidthBase = 75;
+    let initialLives = 3;
+    
+    // Control de aumentos de velocidad
+    let lastSpeedIncreaseTime = 0;
+    let mediumSpeedIncrease = 0;
+    
+    // Efectos visuales
+    let particles = [];
+    
+    // Sonido
+    let audioCtx = null;
+    let soundEnabled = true;
+    
+    // Controles
+    let leftPressed = false;
+    let rightPressed = false;
+    let touchLeft = false;
+    let touchRight = false;
+    
+    // Elementos DOM
+    const scoreSpan = document.getElementById('scoreValue');
+    const livesSpan = document.getElementById('livesValue');
+    const timerSpan = document.getElementById('timerValue');
+    const bestSpan = document.getElementById('bestValue');
+    const menuBestSpan = document.getElementById('menuBest');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const startBtn = document.getElementById('startGameBtn');
+    const playerNameInput = document.getElementById('playerName');
+    const leftTouchBtn = document.getElementById('leftTouch');
+    const rightTouchBtn = document.getElementById('rightTouch');
+    const difficultyEasyBtn = document.getElementById('difficultyEasy');
+    const difficultyMediumBtn = document.getElementById('difficultyMedium');
+    const difficultyHardBtn = document.getElementById('difficultyHard');
+    
+    // Cargar mejor puntuación
+    try {
+      let stored = localStorage.getItem('arkanoid_time_best');
+      if(stored) bestScore = parseInt(stored);
+      bestSpan.innerText = bestScore;
+      menuBestSpan.innerText = bestScore;
+    } catch(e) {}
+    
+    // ---------- INICIALIZAR LADRILLOS ----------
+    function initBricks() {
+      bricks = [];
+      const colors = ['#ff5555', '#ffaa55', '#ffff55', '#55ff55', '#55ffff', '#ff55ff'];
+      for(let row = 0; row < BRICK_ROWS; row++) {
+        for(let col = 0; col < BRICK_COLS; col++) {
+          let x = BRICK_GAP + col * (BRICK_WIDTH + BRICK_GAP);
+          let y = 40 + row * (BRICK_HEIGHT + BRICK_GAP);
+          bricks.push({
+            x: x, y: y, w: BRICK_WIDTH, h: BRICK_HEIGHT,
+            color: colors[row % colors.length],
+            hits: 1,
+            points: 10 + row * 5
+          });
+        }
+      }
+    }
+    
+    // ---------- CONFIGURAR DIFICULTAD ----------
+    function applyDifficulty() {
+      if(difficulty === 'easy') {
+        PADDLE_WIDTH = 95;
+        initialLives = 5;
+        baseBallSpeed = 140;
+        speedIncreaseInterval = 15;
+        speedIncreaseAmount = 20;
+      } else if(difficulty === 'medium') {
+        PADDLE_WIDTH = 80;
+        initialLives = 3;
+        baseBallSpeed = 200;
+        speedIncreaseInterval = 10;
+        speedIncreaseAmount = 30;
+      } else { // hard
+        PADDLE_WIDTH = 65;
+        initialLives = 2;
+        baseBallSpeed = 260;
+        speedIncreaseInterval = 8;
+        speedIncreaseAmount = 40;
+      }
+      lives = initialLives;
+      livesSpan.innerText = lives;
+      paddleX = Math.max(5, Math.min(width - PADDLE_WIDTH - 5, paddleX));
+    }
+    
+    function resetBall() {
+      ballX = width/2;
+      ballY = height - 60;
+      let currentSpeed = baseBallSpeed + mediumSpeedIncrease;
+      ballVx = (Math.random() > 0.5 ? currentSpeed : -currentSpeed);
+      ballVy = -(baseBallSpeed + mediumSpeedIncrease * 0.7);
+    }
+    
+    // ---------- AUDIO ----------
+    function initAudio() {
+      if(!audioCtx && soundEnabled) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) { console.warn("Audio no soportado"); }
+      }
+    }
+    
+    function playSound(type) {
+      if(!soundEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      if(type === 'paddle') {
+        osc.frequency.value = 660;
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.1);
+        osc.start();
+        osc.stop(now+0.09);
+      } else if(type === 'brick') {
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.15);
+        osc.start();
+        osc.stop(now+0.13);
+      } else if(type === 'life') {
+        osc.frequency.value = 220;
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.4);
+        osc.start();
+        osc.stop(now+0.35);
+      } else if(type === 'win') {
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.5);
+        osc.start();
+        osc.stop(now+0.45);
+      } else if(type === 'start') {
+        osc.frequency.value = 660;
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now+0.25);
+        osc.start();
+        osc.stop(now+0.22);
+      }
+    }
+    
+    // ---------- PARTÍCULAS ----------
+    function addParticles(x, y, color, count=8) {
+      for(let i=0;i<count;i++) {
+        particles.push({
+          x: x, y: y,
+          vx: (Math.random()-0.5)*180,
+          vy: (Math.random()-0.5)*180 - 50,
+          life: 0.5,
+          size: 3+Math.random()*4,
+          color: color
+        });
+      }
+    }
+    
+    function updateParticles(dt) {
+      for(let i=0;i<particles.length;i++) {
+        let p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt * 2.5;
+        if(p.life <= 0 || p.y > height+50) {
+          particles.splice(i,1);
+          i--;
+        }
+      }
+    }
+    
+    // ---------- LÓGICA DEL JUEGO ----------
+    function loseLife() {
+      lives--;
+      livesSpan.innerText = lives;
+      playSound('life');
+      if(lives <= 0) {
+        gameActive = false;
+        if(timerInterval) clearInterval(timerInterval);
+        playSound('life');
+        if(score > bestScore) {
+          bestScore = score;
+          localStorage.setItem('arkanoid_time_best', bestScore);
+          bestSpan.innerText = bestScore;
+          menuBestSpan.innerText = bestScore;
+        }
+        drawEndMessage("GAME OVER", false);
+      } else {
+        resetBall();
+        paddleX = width/2 - PADDLE_WIDTH/2;
+      }
+    }
+    
+    function checkWin() {
+      let remaining = bricks.filter(b => b.hits > 0).length;
+      if(remaining === 0) {
+        gameActive = false;
+        if(timerInterval) clearInterval(timerInterval);
+        playSound('win');
+        if(score > bestScore) {
+          bestScore = score;
+          localStorage.setItem('arkanoid_time_best', bestScore);
+          bestSpan.innerText = bestScore;
+          menuBestSpan.innerText = bestScore;
+        }
+        drawEndMessage("✨ VICTORIA! ✨", true);
+      }
+    }
+    
+    function updateGame(dt) {
+      if(!gameActive) return;
+      
+      // Movimiento de la paleta
+      let move = 0;
+      if(leftPressed || touchLeft) move = -1;
+      if(rightPressed || touchRight) move = 1;
+      if(move !== 0) {
+        paddleX += move * 600 * dt;
+        paddleX = Math.max(5, Math.min(width - PADDLE_WIDTH - 5, paddleX));
+      }
+      
+      // Movimiento de la pelota
+      ballX += ballVx * dt;
+      ballY += ballVy * dt;
+      
+      // Colisiones con paredes
+      if(ballX - BALL_RADIUS <= 0) {
+        ballX = BALL_RADIUS;
+        ballVx = -ballVx;
+        playSound('paddle');
+      }
+      if(ballX + BALL_RADIUS >= width) {
+        ballX = width - BALL_RADIUS;
+        ballVx = -ballVx;
+        playSound('paddle');
+      }
+      if(ballY - BALL_RADIUS <= 0) {
+        ballY = BALL_RADIUS;
+        ballVy = -ballVy;
+        playSound('paddle');
+      }
+      
+      // Colisión con la paleta
+      if(ballY + BALL_RADIUS >= PADDLE_Y && ballY - BALL_RADIUS <= PADDLE_Y + PADDLE_HEIGHT &&
+         ballX + BALL_RADIUS > paddleX && ballX - BALL_RADIUS < paddleX + PADDLE_WIDTH) {
+        let hitPos = (ballX - paddleX) / PADDLE_WIDTH;
+        let angle = (hitPos - 0.5) * 1.2;
+        let speed = Math.hypot(ballVx, ballVy);
+        ballVx = Math.sin(angle) * speed;
+        ballVy = -Math.abs(Math.cos(angle) * speed);
+        ballY = PADDLE_Y - BALL_RADIUS;
+        playSound('paddle');
+      }
+      
+      // Colisión con ladrillos
+      for(let i=0; i<bricks.length; i++) {
+        let b = bricks[i];
+        if(b.hits <= 0) continue;
+        if(ballX + BALL_RADIUS > b.x && ballX - BALL_RADIUS < b.x + b.w &&
+           ballY + BALL_RADIUS > b.y && ballY - BALL_RADIUS < b.y + b.h) {
+          b.hits = 0;
+          score += b.points;
+          scoreSpan.innerText = score;
+          playSound('brick');
+          addParticles(ballX, ballY, b.color, 10);
+          
+          let overlapLeft = (ballX + BALL_RADIUS) - b.x;
+          let overlapRight = (b.x + b.w) - (ballX - BALL_RADIUS);
+          let overlapTop = (ballY + BALL_RADIUS) - b.y;
+          let overlapBottom = (b.y + b.h) - (ballY - BALL_RADIUS);
+          let minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+          if(minOverlap === overlapLeft || minOverlap === overlapRight) ballVx = -ballVx;
+          else ballVy = -ballVy;
+          break;
+        }
+      }
+      
+      // Caída de la pelota
+      if(ballY + BALL_RADIUS >= height) {
+        loseLife();
+      }
+      
+      checkWin();
+    }
+    
+    // Actualizar temporizador y dificultad progresiva
+    function updateTimer() {
+      if(!gameActive) return;
+      timeLeft -= 1;
+      timerSpan.innerText = Math.max(0, Math.floor(timeLeft));
+      if(timeLeft <= 0) {
+        timeLeft = 0;
+        gameActive = false;
+        if(timerInterval) clearInterval(timerInterval);
+        playSound('win');
+        if(score > bestScore) {
+          bestScore = score;
+          localStorage.setItem('arkanoid_time_best', bestScore);
+          bestSpan.innerText = bestScore;
+          menuBestSpan.innerText = bestScore;
+        }
+        drawEndMessage("🏆 SOBREVIVISTE 60s 🏆", true);
+      } else {
+        // Aumento de velocidad progresivo según intervalo de dificultad
+        let elapsed = 60 - timeLeft;
+        let expectedIncreases = Math.floor(elapsed / speedIncreaseInterval);
+        let newIncrease = expectedIncreases * speedIncreaseAmount;
+        if(newIncrease !== mediumSpeedIncrease) {
+          mediumSpeedIncrease = newIncrease;
+          let currentSpeed = baseBallSpeed + mediumSpeedIncrease;
+          let currentDirX = Math.sign(ballVx);
+          let currentDirY = Math.sign(ballVy);
+          let newMagnitude = currentSpeed;
+          ballVx = currentDirX * newMagnitude;
+          ballVy = currentDirY * newMagnitude;
+        }
+      }
+    }
+    
+    // ---------- DIBUJADO ----------
+    function draw() {
+      ctx.clearRect(0,0,width,height);
+      ctx.fillStyle = '#0a0f1a';
+      ctx.fillRect(0,0,width,height);
+      
+      // Ladrillos
+      for(let b of bricks) {
+        if(b.hits > 0) {
+          ctx.fillStyle = b.color;
+          ctx.shadowBlur = 4;
+          ctx.fillRect(b.x, b.y, b.w, b.h);
+          ctx.fillStyle = 'rgba(255,255,200,0.3)';
+          ctx.fillRect(b.x+2, b.y+2, b.w-4, 4);
+          ctx.fillStyle = 'rgba(0,0,0,0.2)';
+          ctx.fillRect(b.x+2, b.y+b.h-6, b.w-4, 4);
+        }
+      }
+      ctx.shadowBlur = 0;
+      
+      // Paleta
+      ctx.fillStyle = '#ffaa44';
+      ctx.shadowBlur = 4;
+      ctx.fillRect(paddleX, PADDLE_Y, PADDLE_WIDTH, PADDLE_HEIGHT);
+      ctx.fillStyle = '#ffdd88';
+      ctx.fillRect(paddleX+5, PADDLE_Y-3, PADDLE_WIDTH-10, 5);
+      
+      // Pelota
+      ctx.fillStyle = '#ffffaa';
+      ctx.beginPath();
+      ctx.arc(ballX, ballY, BALL_RADIUS, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#ffaa66';
+      ctx.beginPath();
+      ctx.arc(ballX-2, ballY-2, 2, 0, Math.PI*2);
+      ctx.fill();
+      
+      // Partículas
+      for(let p of particles) {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      }
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+    }
+    
+    function drawEndMessage(msg, isWin) {
+      draw();
+      ctx.font = "bold 26px monospace";
+      ctx.fillStyle = isWin ? "#88ff88" : "#ff8866";
+      ctx.shadowBlur = 0;
+      ctx.fillText(msg, width/2-ctx.measureText(msg).width/2, height/2-40);
+      ctx.font = "14px monospace";
+      ctx.fillStyle = "#ccffaa";
+      ctx.fillText("TOCA PARA REINICIAR", width/2-100, height/2+20);
+    }
+    
+    // ---------- LOOP PRINCIPAL ----------
+    let lastFrame = 0;
+    function gameLoop(nowMs) {
+      requestAnimationFrame(gameLoop);
+      let now = nowMs / 1000;
+      let dt = Math.min(0.033, now - (lastFrame || now));
+      if(dt <= 0) { lastFrame = now; return; }
+      lastFrame = now;
+      
+      if(gameActive) {
+        updateGame(dt);
+      }
+      updateParticles(dt);
+      draw();
+    }
+    
+    // ---------- REINICIO Y CONTROL ----------
+    function resetGame() {
+      initBricks();
+      score = 0;
+      timeLeft = 60;
+      mediumSpeedIncrease = 0;
+      timerSpan.innerText = "60";
+      scoreSpan.innerText = score;
+      applyDifficulty();
+      resetBall();
+      paddleX = width/2 - PADDLE_WIDTH/2;
+      gameActive = true;
+      if(timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+    
+    function startGame() {
+      initAudio();
+      if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      playSound('start');
+      resetGame();
+      menuOverlay.style.display = 'none';
+    }
+    
+    function showMenu() {
+      gameActive = false;
+      if(timerInterval) clearInterval(timerInterval);
+      menuOverlay.style.display = 'flex';
+      bestSpan.innerText = bestScore;
+      menuBestSpan.innerText = bestScore;
+      draw();
+    }
+    
+    // ---------- EVENTOS ----------
+    window.addEventListener('keydown', (e) => {
+      let key = e.key;
+      if(key === 'ArrowLeft' || key === 'a' || key === 'A') {
+        leftPressed = true;
+        e.preventDefault();
+      } else if(key === 'ArrowRight' || key === 'd' || key === 'D') {
+        rightPressed = true;
+        e.preventDefault();
+      }
+      if((key === ' ' || key === 'Space') && !gameActive && menuOverlay.style.display !== 'flex') {
+        showMenu();
+        e.preventDefault();
+      }
+      if(key === 'r' && !gameActive) showMenu();
+    });
+    
+    window.addEventListener('keyup', (e) => {
+      let key = e.key;
+      if(key === 'ArrowLeft' || key === 'a' || key === 'A') leftPressed = false;
+      if(key === 'ArrowRight' || key === 'd' || key === 'D') rightPressed = false;
+    });
+    
+    // Táctiles
+    leftTouchBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); touchLeft=true; });
+    leftTouchBtn.addEventListener('touchend', ()=>{ touchLeft=false; });
+    leftTouchBtn.addEventListener('mousedown', ()=> touchLeft=true);
+    leftTouchBtn.addEventListener('mouseup', ()=> touchLeft=false);
+    rightTouchBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); touchRight=true; });
+    rightTouchBtn.addEventListener('touchend', ()=>{ touchRight=false; });
+    rightTouchBtn.addEventListener('mousedown', ()=> touchRight=true);
+    rightTouchBtn.addEventListener('mouseup', ()=> touchRight=false);
+    
+    canvas.addEventListener('click', () => {
+      if(!gameActive && menuOverlay.style.display !== 'flex') showMenu();
+    });
+    
+    startBtn.addEventListener('click', () => {
+      let name = playerNameInput.value.trim();
+      if(name === "") name = "BREAKER";
+      startGame();
+    });
+    
+    // Selector de dificultad
+    difficultyEasyBtn.addEventListener('click', () => {
+      difficulty = 'easy';
+      difficultyEasyBtn.classList.add('active');
+      difficultyMediumBtn.classList.remove('active');
+      difficultyHardBtn.classList.remove('active');
+    });
+    difficultyMediumBtn.addEventListener('click', () => {
+      difficulty = 'medium';
+      difficultyMediumBtn.classList.add('active');
+      difficultyEasyBtn.classList.remove('active');
+      difficultyHardBtn.classList.remove('active');
+    });
+    difficultyHardBtn.addEventListener('click', () => {
+      difficulty = 'hard';
+      difficultyHardBtn.classList.add('active');
+      difficultyEasyBtn.classList.remove('active');
+      difficultyMediumBtn.classList.remove('active');
+    });
+    
+    canvas.addEventListener('contextmenu', (e)=>e.preventDefault());
+    
+    // Inicializar con menú
+    initBricks();
+    applyDifficulty();
+    gameActive = false;
+    showMenu();
+    requestAnimationFrame(gameLoop);
+    
+    // Silenciar con M
+    window.addEventListener('keydown', (e) => {
+      if(e.key === 'm' || e.key === 'M') {
+        soundEnabled = !soundEnabled;
+        if(soundEnabled && !audioCtx) initAudio();
+      }
+    });
+  })();
+</script>
+</body>
+</html>
+```
