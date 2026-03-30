@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>COSMIC COLLECTOR · Arcade</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 30%, #030a1a, #000000);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Courier New', 'VT323', monospace;
+      padding: 20px;
+    }
+
+    .game-container {
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 48px;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 20px 35px rgba(0,0,0,0.6);
+    }
+
+    .game-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .stats-panel {
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #6ee7ff;
+      border-radius: 60px;
+      padding: 8px 28px;
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #e0f2fe;
+      text-shadow: 0 0 5px #00aaff;
+    }
+
+    .stat span:first-child { font-size: 1.6rem; }
+    .stat span:last-child {
+      background: #0a1f2a;
+      padding: 4px 16px;
+      border-radius: 40px;
+      min-width: 65px;
+      text-align: center;
+      border: 1px solid #6ee7ff;
+    }
+
+    canvas {
+      display: block;
+      margin: 0 auto;
+      border-radius: 28px;
+      box-shadow: 0 0 0 4px #6ee7ff, 0 12px 28px black;
+      cursor: none;
+      touch-action: none;
+    }
+
+    .controls {
+      display: flex;
+      gap: 20px;
+      margin-top: 8px;
+    }
+    .ctrl-btn {
+      background: #1f2a3a;
+      border: 2px solid #6ee7ff;
+      border-radius: 50px;
+      padding: 8px 24px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      font-family: monospace;
+      color: #e0f2fe;
+      cursor: pointer;
+      transition: 0.05s linear;
+      box-shadow: 0 4px 0 #0a2a3a;
+    }
+    .ctrl-btn:active { transform: translateY(2px); }
+
+    .touch-buttons {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .touch-btn {
+      background: #1f2a3a;
+      border: 2px solid #6ee7ff;
+      border-radius: 60px;
+      width: 80px;
+      padding: 8px 0;
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #e0f2fe;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #0a2a3a;
+      transition: 0.05s linear;
+    }
+    .touch-btn:active { transform: translateY(2px); }
+
+    @media (min-width: 701px) {
+      .touch-buttons { display: none; }
+    }
+
+    .menu-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 5, 15, 0.96);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      border-radius: 28px;
+    }
+    .menu-card {
+      background: linear-gradient(145deg, #101a2a, #030811);
+      border: 3px solid #6ee7ff;
+      border-radius: 56px;
+      padding: 28px 20px;
+      text-align: center;
+      width: 280px;
+    }
+    .menu-card h1 {
+      font-size: 1.9rem;
+      color: #6ee7ff;
+      text-shadow: 0 0 8px #00aaff;
+      letter-spacing: 2px;
+    }
+    .menu-card button {
+      background: #6ee7ff;
+      border: none;
+      padding: 10px;
+      width: 100%;
+      font-size: 1.3rem;
+      font-weight: bold;
+      border-radius: 40px;
+      margin-top: 20px;
+      font-family: monospace;
+      cursor: pointer;
+      color: #030811;
+      box-shadow: 0 4px 0 #2a6a8a;
+      transition: 0.05s linear;
+    }
+    .menu-card button:active { transform: translateY(2px); }
+    .highscore-text {
+      margin-top: 20px;
+      color: #e0f2fe;
+      background: #00000066;
+      border-radius: 30px;
+      padding: 8px;
+    }
+    .footer { font-size: 0.7rem; margin-top: 12px; color: #6ee7ff; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="game-container">
+  <div class="game-wrapper">
+    <div class="stats-panel">
+      <div class="stat"><span>⭐</span><span id="scoreValue">0</span></div>
+      <div class="stat"><span>❤️</span><span id="livesValue">3</span></div>
+      <div class="stat"><span>⏱️</span><span id="timerValue">60</span></div>
+      <div class="stat"><span>🏆</span><span id="bestValue">0</span></div>
+    </div>
+
+    <div style="position: relative;">
+      <canvas id="gameCanvas" width="700" height="600"></canvas>
+      <div id="menuOverlay" class="menu-overlay">
+        <div class="menu-card">
+          <h1>✨ COSMIC COLLECTOR</h1>
+          <button id="startBtn">🚀 COMENZAR MISIÓN</button>
+          <div class="highscore-text">🏅 RÉCORD: <span id="menuBest">0</span></div>
+          <div class="footer">← → · Flechas / botones táctiles<br>⭐ Atrapa estrellas · Esquiva asteroides 💥</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="touch-buttons">
+      <button class="touch-btn" id="moveLeftBtn">◀ IZQ</button>
+      <button class="touch-btn" id="moveRightBtn">DER ▶</button>
+    </div>
+    <div class="controls">
+      <button id="resetBtn" class="ctrl-btn">🔄 REINICIAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Configuración canvas
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const width = 700, height = 600;
+    canvas.width = width; canvas.height = height;
+
+    // Constantes del juego
+    const PLAYER_RADIUS = 18;
+    const STAR_RADIUS = 9;
+    const ASTEROID_RADIUS = 14;
+    const PLAYER_FIXED_Y = height - 60;
+    const PLAYER_SPEED = 380; // píxeles por segundo
+    const SPAWN_RATE_STAR = 0.65;   // segundos entre estrellas
+    const SPAWN_RATE_ASTEROID = 0.9;
+    const ASTEROID_BASE_SPEED = 180; // px/seg
+    const STAR_BASE_SPEED = 150;
+
+    let playerX = width / 2;
+    let stars = [];
+    let asteroids = [];
+    let score = 0;
+    let lives = 3;
+    let highScore = 0;
+    let gameActive = false;
+    let timeLeft = 60;
+    let timerInterval = null;
+    let animationId = null;
+    let lastTimestamp = 0;
+    let lastStarSpawn = 0;
+    let lastAsteroidSpawn = 0;
+
+    // Elementos DOM
+    const scoreSpan = document.getElementById('scoreValue');
+    const livesSpan = document.getElementById('livesValue');
+    const timerSpan = document.getElementById('timerValue');
+    const bestSpan = document.getElementById('bestValue');
+    const menuBestSpan = document.getElementById('menuBest');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const moveLeftBtn = document.getElementById('moveLeftBtn');
+    const moveRightBtn = document.getElementById('moveRightBtn');
+
+    // Highscore local
+    try {
+      let stored = localStorage.getItem('cosmic_high');
+      if(stored) highScore = parseInt(stored);
+      bestSpan.innerText = highScore;
+      menuBestSpan.innerText = highScore;
+    } catch(e) {}
+
+    function updateUI() {
+      scoreSpan.innerText = Math.floor(score);
+      livesSpan.innerText = lives;
+      timerSpan.innerText = timeLeft;
+      if(score > highScore) {
+        highScore = Math.floor(score);
+        bestSpan.innerText = highScore;
+        menuBestSpan.innerText = highScore;
+        localStorage.setItem('cosmic_high', highScore);
+      }
+    }
+
+    // Sonido simple con Web Audio
+    let audioCtx = null;
+    function initAudio() {
+      if(!audioCtx) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch(e) {}
+      }
+    }
+    function playCollectSound() {
+      if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 1100;
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now+0.1);
+      osc.start();
+      osc.stop(now+0.09);
+    }
+    function playHitSound() {
+      if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 320;
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now+0.2);
+      osc.start();
+      osc.stop(now+0.18);
+    }
+
+    // Spawn de objetos
+    function spawnStar(nowSec) {
+      let x = Math.random() * (width - 2 * STAR_RADIUS) + STAR_RADIUS;
+      stars.push({
+        x: x,
+        y: -STAR_RADIUS,
+        radius: STAR_RADIUS
+      });
+    }
+    function spawnAsteroid(nowSec) {
+      let x = Math.random() * (width - 2 * ASTEROID_RADIUS) + ASTEROID_RADIUS;
+      asteroids.push({
+        x: x,
+        y: -ASTEROID_RADIUS,
+        radius: ASTEROID_RADIUS,
+        speedY: ASTEROID_BASE_SPEED + Math.random() * 40
+      });
+    }
+
+    // Actualizar objetos y colisiones
+    function updateObjects(deltaSec, nowSec) {
+      // Actualizar estrellas
+      for(let i=0; i<stars.length; i++) {
+        let s = stars[i];
+        s.y += STAR_BASE_SPEED * deltaSec;
+        if(s.y + STAR_RADIUS > height + 50) {
+          stars.splice(i,1);
+          i--;
+          continue;
+        }
+        // Colisión con jugador
+        let dx = playerX - s.x;
+        let dy = PLAYER_FIXED_Y - s.y;
+        let dist = Math.hypot(dx, dy);
+        if(dist < PLAYER_RADIUS + STAR_RADIUS) {
+          stars.splice(i,1);
+          score += 10;
+          updateUI();
+          playCollectSound();
+          i--;
+        }
+      }
+
+      // Actualizar asteroides
+      for(let i=0; i<asteroids.length; i++) {
+        let a = asteroids[i];
+        a.y += a.speedY * deltaSec;
+        if(a.y + ASTEROID_RADIUS > height + 60) {
+          asteroids.splice(i,1);
+          i--;
+          continue;
+        }
+        // Colisión con jugador
+        let dx = playerX - a.x;
+        let dy = PLAYER_FIXED_Y - a.y;
+        let dist = Math.hypot(dx, dy);
+        if(dist < PLAYER_RADIUS + ASTEROID_RADIUS) {
+          asteroids.splice(i,1);
+          lives--;
+          updateUI();
+          playHitSound();
+          if(lives <= 0) {
+            gameOver("💥 NAVE DESTRUIDA 💥");
+          }
+          i--;
+        }
+      }
+    }
+
+    // Temporizador
+    function startTimer() {
+      if(timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if(!gameActive) return;
+        if(timeLeft <= 1) {
+          timeLeft = 0;
+          updateUI();
+          endGame("✨ ¡MISIÓN CUMPLIDA! ✨", true);
+        } else {
+          timeLeft--;
+          updateUI();
+        }
+      }, 1000);
+    }
+
+    function endGame(message, isWin) {
+      if(!gameActive) return;
+      gameActive = false;
+      if(timerInterval) clearInterval(timerInterval);
+      if(animationId) cancelAnimationFrame(animationId);
+      drawEndMessage(message, isWin);
+      setTimeout(() => showMenu(), 2200);
+    }
+
+    function gameOver(message) {
+      if(!gameActive) return;
+      gameActive = false;
+      if(timerInterval) clearInterval(timerInterval);
+      if(animationId) cancelAnimationFrame(animationId);
+      drawEndMessage(message, false);
+      setTimeout(() => showMenu(), 2200);
+    }
+
+    function drawEndMessage(msg, isWin) {
+      draw();
+      ctx.font = "bold 26px monospace";
+      ctx.fillStyle = isWin ? "#aaffdd" : "#ff8866";
+      ctx.shadowBlur = 0;
+      ctx.fillText(msg, width/2 - ctx.measureText(msg).width/2, height/2 - 40);
+      ctx.font = "16px monospace";
+      ctx.fillStyle = "#6ee7ff";
+      ctx.fillText("Volviendo al hangar...", width/2-120, height/2+20);
+    }
+
+    // Movimiento del jugador (teclado, táctil, ratón)
+    let targetX = playerX;
+    function movePlayer(deltaSec) {
+      let diff = targetX - playerX;
+      let move = diff * 8 * deltaSec; // interpolación suave
+      playerX += Math.min(Math.abs(diff), Math.abs(move)) * Math.sign(diff);
+      playerX = Math.min(width - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, playerX));
+    }
+    function setTargetX(value) {
+      targetX = Math.min(width - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, value));
+    }
+
+    // Dibujo
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      // Fondo estelar
+      let grad = ctx.createLinearGradient(0, 0, 0, height);
+      grad.addColorStop(0, "#040b1a");
+      grad.addColorStop(1, "#01050c");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+      // Estrellas de fondo (parpadeo)
+      for(let i=0; i<150; i++) {
+        if(i%2 === 0) continue; // solo algunas
+        ctx.fillStyle = `rgba(255,240,200,${0.3+Math.sin(Date.now()*0.002+i)*0.2})`;
+        ctx.beginPath();
+        ctx.arc( (i*131)%width, (i*97)%height, 1.5, 0, Math.PI*2);
+        ctx.fill();
+      }
+      
+      // Dibujar estrellas (coleccionables)
+      for(let s of stars) {
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = "#FFE484";
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, STAR_RADIUS-1, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#FFB347";
+        ctx.beginPath();
+        ctx.arc(s.x-2, s.y-2, 3, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "12px monospace";
+        ctx.fillText("⭐", s.x-6, s.y+4);
+        ctx.shadowBlur = 0;
+      }
+      
+      // Dibujar asteroides
+      for(let a of asteroids) {
+        ctx.shadowBlur = 5;
+        ctx.fillStyle = "#7a5a4a";
+        ctx.beginPath();
+        ctx.arc(a.x, a.y, ASTEROID_RADIUS-1, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#4a2e2a";
+        ctx.beginPath();
+        ctx.arc(a.x-3, a.y-2, 4, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = "#2a1a12";
+        for(let k=0;k<4;k++) {
+          ctx.beginPath();
+          ctx.arc(a.x-5+Math.sin(k)*5, a.y-4+Math.cos(k*2)*4, 2, 0, Math.PI*2);
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+      }
+      
+      // Dibujar nave
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = "#6ee7ff";
+      ctx.beginPath();
+      ctx.moveTo(playerX, PLAYER_FIXED_Y - PLAYER_RADIUS);
+      ctx.lineTo(playerX - PLAYER_RADIUS, PLAYER_FIXED_Y + 5);
+      ctx.lineTo(playerX - PLAYER_RADIUS/2, PLAYER_FIXED_Y - 2);
+      ctx.lineTo(playerX, PLAYER_FIXED_Y + PLAYER_RADIUS-2);
+      ctx.lineTo(playerX + PLAYER_RADIUS/2, PLAYER_FIXED_Y - 2);
+      ctx.lineTo(playerX + PLAYER_RADIUS, PLAYER_FIXED_Y + 5);
+      ctx.fill();
+      ctx.fillStyle = "#2aaacc";
+      ctx.beginPath();
+      ctx.ellipse(playerX, PLAYER_FIXED_Y-8, 8, 10, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(playerX-3, PLAYER_FIXED_Y-12, 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(playerX+3, PLAYER_FIXED_Y-12, 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      ctx.font = "12px monospace";
+      ctx.fillStyle = "#6ee7ff";
+      ctx.fillText("NIVEL ÚNICO · 60s", 20, 30);
+    }
+
+    // Game loop con delta time y spawns
+    let gameStartTime = 0;
+    function gameLoop(nowMs) {
+      if(!gameActive) return;
+      requestAnimationFrame(gameLoop);
+      if(!lastTimestamp) { lastTimestamp = nowMs; return; }
+      let delta = Math.min(0.033, (nowMs - lastTimestamp) / 1000);
+      if(delta <= 0) { lastTimestamp = nowMs; return; }
+      lastTimestamp = nowMs;
+      
+      let nowSec = nowMs / 1000;
+      let elapsed = nowSec - gameStartTime;
+      
+      // Spawn de estrellas
+      if(elapsed - lastStarSpawn >= SPAWN_RATE_STAR) {
+        spawnStar(nowSec);
+        lastStarSpawn = elapsed;
+      }
+      // Spawn de asteroides
+      if(elapsed - lastAsteroidSpawn >= SPAWN_RATE_ASTEROID) {
+        spawnAsteroid(nowSec);
+        lastAsteroidSpawn = elapsed;
+      }
+      
+      movePlayer(delta);
+      updateObjects(delta, nowSec);
+      draw();
+    }
+
+    // Reset del juego
+    function resetGame() {
+      if(timerInterval) clearInterval(timerInterval);
+      gameActive = false;
+      if(animationId) cancelAnimationFrame(animationId);
+      stars = [];
+      asteroids = [];
+      score = 0;
+      lives = 3;
+      timeLeft = 60;
+      playerX = width/2;
+      targetX = width/2;
+      lastStarSpawn = 0;
+      lastAsteroidSpawn = 0;
+      updateUI();
+      gameActive = true;
+      gameStartTime = performance.now() / 1000;
+      lastTimestamp = 0;
+      startTimer();
+      animationId = requestAnimationFrame(gameLoop);
+      draw();
+    }
+
+    function startGame() {
+      initAudio();
+      if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      resetGame();
+      menuOverlay.style.display = 'none';
+    }
+
+    function showMenu() {
+      gameActive = false;
+      if(timerInterval) clearInterval(timerInterval);
+      if(animationId) cancelAnimationFrame(animationId);
+      menuOverlay.style.display = 'flex';
+      bestSpan.innerText = highScore;
+      menuBestSpan.innerText = highScore;
+      draw();
+    }
+
+    // Controles
+    function handleKeyDown(e) {
+      if(!gameActive) return;
+      if(e.key === 'ArrowLeft') {
+        setTargetX(targetX - 28);
+        e.preventDefault();
+      } else if(e.key === 'ArrowRight') {
+        setTargetX(targetX + 28);
+        e.preventDefault();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    
+    // Movimiento por mouse/touch en canvas
+    canvas.addEventListener('mousemove', (e) => {
+      if(!gameActive) return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      let mouseX = (e.clientX - rect.left) * scaleX;
+      setTargetX(mouseX);
+    });
+    canvas.addEventListener('touchmove', (e) => {
+      if(!gameActive) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      let touchX = (e.touches[0].clientX - rect.left) * scaleX;
+      setTargetX(touchX);
+    });
+    canvas.addEventListener('touchstart', (e) => e.preventDefault());
+    
+    // Botones táctiles
+    moveLeftBtn.addEventListener('click', () => { if(gameActive) setTargetX(targetX - 35); });
+    moveRightBtn.addEventListener('click', () => { if(gameActive) setTargetX(targetX + 35); });
+    moveLeftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if(gameActive) setTargetX(targetX - 35); });
+    moveRightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); if(gameActive) setTargetX(targetX + 35); });
+    
+    resetBtn.addEventListener('click', () => {
+      if(gameActive) {
+        endGame("🔄 Reiniciando...", false);
+        setTimeout(() => startGame(), 600);
+      } else {
+        showMenu();
+      }
+    });
+    startBtn.addEventListener('click', startGame);
+    
+    // Mostrar menú inicial
+    draw();
+    showMenu();
+  })();
+</script>
+</body>
+</html>
