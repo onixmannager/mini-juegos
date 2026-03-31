@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
   <title>Mini Juegos Online - Retro Arcade Hub</title>
   <style>
     * {
@@ -10,6 +10,7 @@
       padding: 0;
       box-sizing: border-box;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
@@ -90,7 +91,7 @@
       font-family: monospace;
     }
 
-    /* Grid de tarjetas */
+    /* Grid de tarjetas - por defecto flexible */
     .games-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -192,7 +193,7 @@
       letter-spacing: 1px;
     }
 
-    /* efecto pixelado extra */
+    /* efecto pixelado extra (solo escritorio) */
     .pixel-cursor {
       width: 12px;
       height: 12px;
@@ -209,6 +210,166 @@
     @media (min-width: 1024px) {
       .pixel-cursor { display: block; }
     }
+
+    /* ========== RESPONSIVE MÓVIL: 2 COLUMNAS + TARJETAS ULTRACOMPACTAS ========== */
+    @media (max-width: 640px) {
+      .container {
+        padding: 1rem 0.75rem 2rem;
+      }
+
+      .hero {
+        margin-bottom: 1.5rem;
+      }
+
+      .glitch {
+        font-size: 2rem;
+        letter-spacing: 2px;
+        animation: glitch-shake 0.25s infinite alternate;
+      }
+
+      .sub {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.8rem;
+        margin-top: 0.2rem;
+      }
+
+      /* Grid con 2 columnas fijas, sin min-width grande */
+      .games-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+
+      /* Tarjetas ultracompactas */
+      .card {
+        padding: 0.7rem 0.5rem 0.9rem;
+        border-radius: 18px;
+        transition: transform 0.1s ease;
+        /* Forzamos que ocupen el espacio disponible sin romper */
+        min-width: 0;
+      }
+
+      /* Icono mucho más pequeño */
+      .game-icon {
+        font-size: 1.8rem;
+        margin-bottom: 0.3rem;
+        display: block;
+        text-align: center;
+      }
+
+      /* Título reducido */
+      .card h2 {
+        font-size: 0.85rem;
+        margin-bottom: 0.2rem;
+        text-align: center;
+        letter-spacing: 0;
+        text-shadow: 1px 1px 0 #2a1e0c;
+        white-space: nowrap;
+        overflow-x: hidden;
+        text-overflow: ellipsis;
+        padding: 0 0.1rem;
+      }
+
+      /* Descripción más concisa */
+      .card p {
+        font-size: 0.6rem;
+        line-height: 1.2;
+        margin: 0.3rem 0 0.6rem;
+        text-align: center;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      /* Botón más pequeño y centrado */
+      .btn-jugar {
+        padding: 4px 6px;
+        font-size: 0.65rem;
+        box-shadow: 0 2px 0 #7a3e00;
+        border-radius: 30px;
+        width: 90%;
+        margin: 0 auto;
+        display: block;
+      }
+
+      .btn-jugar:active {
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 #7a3e00;
+      }
+
+      /* Footer compacto */
+      .footer {
+        margin-top: 1.8rem;
+        padding-top: 1rem;
+        font-size: 0.55rem;
+      }
+
+      /* Quitar hover excesivo en móvil, mantener efecto táctil */
+      .card:active {
+        transform: scale(0.97);
+        transition: 0.02s linear;
+      }
+    }
+
+    /* Para pantallas muy estrechas (< 480px) ajustamos un poco más los textos y padding */
+    @media (max-width: 480px) {
+      .games-grid {
+        gap: 0.6rem;
+      }
+      .card {
+        padding: 0.6rem 0.4rem 0.8rem;
+      }
+      .game-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.2rem;
+      }
+      .card h2 {
+        font-size: 0.75rem;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.2;
+      }
+      .card p {
+        font-size: 0.55rem;
+        -webkit-line-clamp: 2;
+      }
+      .btn-jugar {
+        font-size: 0.6rem;
+        padding: 3px 5px;
+        width: 95%;
+      }
+      .glitch {
+        font-size: 1.7rem;
+      }
+    }
+
+    /* Para móviles en landscape: mantener 2 columnas pero con mejor altura */
+    @media (max-width: 800px) and (orientation: landscape) {
+      .games-grid {
+        gap: 0.8rem;
+      }
+      .card {
+        padding: 0.5rem 0.4rem 0.7rem;
+      }
+      .card h2 {
+        font-size: 0.8rem;
+        white-space: nowrap;
+      }
+      .card p {
+        font-size: 0.55rem;
+        -webkit-line-clamp: 1;
+      }
+      .btn-jugar {
+        font-size: 0.6rem;
+      }
+    }
+
+    /* Mejora de accesibilidad táctil */
+    button, .card {
+      touch-action: manipulation;
+    }
   </style>
 </head>
 <body>
@@ -219,101 +380,80 @@
   </div>
 
   <div class="games-grid" id="gamesGrid">
-    <!-- Las tarjetas se generarán con JS para mantener dinamismo, pero también podemos ponerlas estáticas -->
+    <!-- Las tarjetas se generarán dinámicamente con JS -->
   </div>
 
   <div class="footer">
     <span>🕹️  SELECT YOUR GAME  🕹️</span><br>
-    <span>← →  |  HOVER + CLICK  |  SONIDO RETRO</span>
+    <span>← →  |  TAP TO PLAY  |  SONIDO RETRO</span>
   </div>
 </div>
 
 <script>
   // ======================== LISTA DE JUEGOS ========================
-  // Cada juego debe tener un archivo .html en la misma carpeta (o ruta relativa)
-  // Si prefieres incrustar el código directamente, podrías crear un iframe, pero es más limpio enlazar.
-  // Por defecto, apuntaremos a archivos separados. Puedes renombrarlos como quieras.
   const games = [
     {
       id: "minirun",
       title: "⚡ MARIO FUCK",
-      description: "Corre, salta y esquiva obstáculos. Doble salto, monedas y fondo con montañas. ¡Llega a la meta!",
+      description: "Corre, salta y esquiva obstáculos. Doble salto, monedas y fondo con montañas.",
       icon: "🏃‍♂️",
-      color: "#e74c3c",
-      link: "mariofuck.html",   // Archivo esperado: minirun.html
-      sound: "platform"
+      link: "mariofuck.html"
     },
     {
       id: "highway",
       title: "🔥 SPEED RUN 90s",
-      description: "Carrera contrarreloj, esquiva coches, recoge monedas y consigue la mejor puntuación. ¡Tienes una vida extra!",
+      description: "Carrera contrarreloj, esquiva coches, recoge monedas.",
       icon: "🚗💨",
-      color: "#ffaa33",
-      link: "coches.html",   // Archivo esperado: highway_racer.html
-      sound: "racing"
+      link: "coches.html"
     },
     {
-      id: "minirun2",
-      title: " RECOLECT",
-      description: "Recolecta tokens. ¡El clásico caido del cielo!",
+      id: "recolecta",
+      title: "✨ RECOLECT",
+      description: "Recolecta tokens. ¡El clásico caído del cielo!",
       icon: "🪙",
-      color: "#4c9aff",
-      link: "recolecta.html",  // puedes renombrar si lo tienes como otro archivo
-      sound: "deluxe"
+      link: "recolecta.html"
     },
     {
-      id: "minirun2",
-      title: " SIMON",
-      description: "Recolecta tokens. ¡El clásico caido del cielo!",
-      icon: "🧠",
-      color: "#4c9aff",
-      link: "simon.html",  // puedes renombrar si lo tienes como otro archivo
-      sound: "deluxe"
-    },
-     {
-      id: "minirun2",
-      title: "SNAKE",
-      description: "La serpiente de toda la vida. ¡Guauu!",
-      icon: "🐍",
-      color: "#4c9aff",
-      link: "snake.html",  // puedes renombrar si lo tienes como otro archivo
-      sound: "deluxe"
-    },
-     {
-      id: "minirun2",
-      title: "ARKANOID",
-      description: "Arkanoid. ¡Guauu!",
-      icon: "🧱🧱🧱",
-      color: "#4c9aff",
-      link: "arkanoid.html",  // puedes renombrar si lo tienes como otro archivo
-      sound: "deluxe"
-    },
-     {
-      id: "minirun2",
-      title: "ROLLERCOIN",
-      description: "Rollercoin. ¡Guauu!",
-      icon: "🙂",
-      color: "#4c9aff",
-      link: "rollercoin.html",  // puedes renombrar si lo tienes como otro archivo
-      sound: "deluxe"
+      id: "simon",
+      title: "🧠 SIMON",
+      description: "Memoriza y repite la secuencia.",
+      icon: "🔊",
+      link: "simon.html"
     },
     {
-      id: "minirun2",
-      title: "INVADERS",
-      description: "Invaders. ¡Guauu!",
-      icon: "👽",
-      color: "#4c9aff",
-      link: "invaders.html",  // puedes renombrar si lo tienes como otro archivo
-      sound: "deluxe"
+      id: "snake",
+      title: "🐍 SNAKE",
+      description: "La serpiente clásica. Come frutas sin chocar.",
+      icon: "🍎",
+      link: "snake.html"
     },
     {
-      id: "minirun2",
-      title: "✨ COSMIC COLLECTOR",
-      description: "Invaders. ¡Guauu!",
-      icon: "🚀",
-      color: "#4c9aff",
-      link: "cosmiccollector.html",  // puedes renombrar si lo tienes como otro archivo
-      sound: "deluxe"
+      id: "arkanoid",
+      title: "🧱 ARKANOID",
+      description: "Rompe ladrillos con la paleta.",
+      icon: "🏓",
+      link: "arkanoid.html"
+    },
+    {
+      id: "rollercoin",
+      title: "🙂 ROLLERCOIN",
+      description: "Recoge monedas rodantes, acumula puntuación.",
+      icon: "💰",
+      link: "rollercoin.html"
+    },
+    {
+      id: "invaders",
+      title: "👾 INVADERS",
+      description: "Invasores del espacio. Dispara y defiende.",
+      icon: "🛸",
+      link: "invaders.html"
+    },
+    {
+      id: "cosmic",
+      title: "🚀 COSMIC COL.",
+      description: "Recoge estrellas en el espacio.",
+      icon: "🌠",
+      link: "cosmiccollector.html"
     }
   ];
 
@@ -331,6 +471,8 @@
 
   function playRetroBeep(type = 'hover') {
     if (!soundEnabled || !audioCtx) return;
+    if (audioCtx.state !== 'running') return;
+    
     const now = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -357,7 +499,7 @@
     }
   }
 
-  // Generar tarjetas dinámicamente con eventos de sonido
+  // Generar tarjetas dinámicamente
   function buildCards() {
     const grid = document.getElementById('gamesGrid');
     grid.innerHTML = '';
@@ -366,7 +508,6 @@
       card.className = 'card';
       card.setAttribute('data-game-id', game.id);
       
-      // Icono
       const iconSpan = document.createElement('div');
       iconSpan.className = 'game-icon';
       iconSpan.textContent = game.icon;
@@ -379,43 +520,41 @@
       
       const btn = document.createElement('button');
       btn.className = 'btn-jugar';
-      btn.textContent = '▶ JUGAR AHORA';
+      btn.textContent = '▶ JUGAR';
       
       card.appendChild(iconSpan);
       card.appendChild(title);
       card.appendChild(desc);
       card.appendChild(btn);
       
-      // Eventos de sonido
-      card.addEventListener('mouseenter', (e) => {
-        if (soundEnabled && audioCtx) {
+      // Sonido hover (solo escritorio, pero no molesta en móvil)
+      card.addEventListener('mouseenter', () => {
+        if (soundEnabled && audioCtx && audioCtx.state === 'running') {
           playRetroBeep('hover');
-          // pequeño efecto visual de brillo
-          card.style.transition = '0.05s linear';
         }
       });
       
-      // Click para redirigir al juego
+      // Evento click en botón
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (soundEnabled && audioCtx) {
+        if (soundEnabled && audioCtx && audioCtx.state === 'running') {
           playRetroBeep('click');
           setTimeout(() => {
             window.location.href = game.link;
-          }, 80);
+          }, 70);
         } else {
           window.location.href = game.link;
         }
       });
       
-      // También clic en la tarjeta entera (excepto si es botón)
+      // Click en toda la tarjeta
       card.addEventListener('click', (e) => {
         if (e.target !== btn) {
-          if (soundEnabled && audioCtx) {
+          if (soundEnabled && audioCtx && audioCtx.state === 'running') {
             playRetroBeep('select');
             setTimeout(() => {
               window.location.href = game.link;
-            }, 100);
+            }, 90);
           } else {
             window.location.href = game.link;
           }
@@ -426,28 +565,30 @@
     });
   }
 
-  // Inicializar sonido con interacción del usuario (la primera vez que se hace click en cualquier lugar)
+  // Inicializar sonido con interacción del usuario
   let audioInitialized = false;
   function enableAudioOnFirstInteraction() {
     if (audioInitialized) return;
     initAudio();
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume().then(() => {
+    if (audioCtx) {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().then(() => {
+          audioInitialized = true;
+          playRetroBeep('select');
+        }).catch(e => console.log("Audio resume fallo", e));
+      } else {
         audioInitialized = true;
-        // reproducir un pequeño sonido de bienvenida
         playRetroBeep('select');
-      }).catch(e=>console.log);
+      }
     } else {
       audioInitialized = true;
-      if(audioCtx) playRetroBeep('select');
     }
   }
   
-  // Detectar cualquier interacción para activar audio (requerido por navegadores)
   window.addEventListener('click', enableAudioOnFirstInteraction, { once: true });
   window.addEventListener('touchstart', enableAudioOnFirstInteraction, { once: true });
   
-  // cursor pixelado opcional
+  // cursor pixelado opcional (solo escritorio)
   const cursorDiv = document.createElement('div');
   cursorDiv.className = 'pixel-cursor';
   document.body.appendChild(cursorDiv);
@@ -462,15 +603,11 @@
     cursorDiv.style.display = 'block';
   });
   
-  // Build de las tarjetas
   buildCards();
   
-  // Agregar efecto de sonido al inicio silencioso pero preparado
   setTimeout(() => {
     if (!audioCtx && soundEnabled) initAudio();
-  }, 100);
+  }, 200);
 </script>
-
-<!-- Instrucciones para el usuario: si los juegos están en archivos separados, deben estar en la misma carpeta con los nombres indicados -->
 </body>
 </html>
