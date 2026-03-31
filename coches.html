@@ -24,12 +24,56 @@
       padding: 16px;
     }
 
+    /* Contenedor principal con estructura limpia */
+    .game-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 28px;
+      padding: 16px;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.5);
+    }
+
+    /* Barra superior de estadísticas (fuera del canvas) */
+    .stats-bar {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      gap: 16px;
+      background: rgba(10, 20, 15, 0.75);
+      backdrop-filter: blur(8px);
+      padding: 10px 20px;
+      border-radius: 60px;
+      border: 1px solid #ffaa44;
+      font-family: monospace;
+      font-weight: bold;
+      color: #f2e95c;
+      text-shadow: 1px 1px 0 #000;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      background: rgba(0,0,0,0.5);
+      padding: 4px 14px;
+      border-radius: 40px;
+    }
+
+    .stat span {
+      color: #ffdd99;
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
     .game-container {
       position: relative;
       border-radius: 24px;
       box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
       background: #000;
-      display: inline-block;
     }
 
     canvas {
@@ -41,45 +85,16 @@
       box-shadow: 0 0 0 4px #ffcc44, 0 0 0 8px #2a1e0c;
     }
 
-    .hud {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      right: 16px;
-      display: flex;
-      justify-content: space-between;
-      pointer-events: none;
-      z-index: 10;
-      text-shadow: 2px 2px 0 #000;
-      font-size: 1rem;
-      letter-spacing: 2px;
-    }
-
-    .hud div {
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-      padding: 6px 12px;
-      border-radius: 40px;
-      color: #f2e95c;
-      border: 1px solid #ffcc33;
-      font-weight: bold;
-      font-family: 'Courier New', monospace;
-    }
-
+    /* Controles táctiles en barra inferior (fuera del canvas) */
     .touch-panel {
-      position: absolute;
-      bottom: 20px;
-      left: 0;
-      right: 0;
       display: flex;
       justify-content: center;
       gap: 35px;
-      z-index: 20;
-      pointer-events: none;
+      width: 100%;
+      margin-top: 8px;
     }
 
     .touch-btn {
-      pointer-events: auto;
       background: rgba(20,20,30,0.85);
       backdrop-filter: blur(12px);
       border: 2px solid #ffaa33;
@@ -107,7 +122,7 @@
     }
 
     .menu-overlay {
-      position: absolute;
+      position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.85);
       backdrop-filter: blur(10px);
@@ -115,7 +130,6 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      border-radius: 16px;
     }
 
     .menu-card {
@@ -188,26 +202,32 @@
   </style>
 </head>
 <body>
-<div class="game-container">
-  <canvas id="gameCanvas" width="400" height="600"></canvas>
-  <div class="hud">
-    <div>🏁 SCORE: <span id="scoreValue">0</span></div>
-    <div>❤️ <span id="livesValue">2</span></div>
-    <div>⏱️ <span id="timeValue">30</span>s</div>
-    <div>🏆 BEST: <span id="bestValue">0</span></div>
+<div class="game-wrapper">
+  <!-- Barra de estadísticas fuera del canvas -->
+  <div class="stats-bar">
+    <div class="stat">🏁 SCORE: <span id="scoreValue">0</span></div>
+    <div class="stat">❤️ <span id="livesValue">2</span></div>
+    <div class="stat">⏱️ <span id="timeValue">30</span>s</div>
+    <div class="stat">🏆 BEST: <span id="bestValue">0</span></div>
   </div>
+
+  <div class="game-container">
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+  </div>
+
   <div class="touch-panel">
     <button class="touch-btn" id="leftTouch">◀</button>
     <button class="touch-btn" id="rightTouch">▶</button>
   </div>
-  <div id="menuOverlay" class="menu-overlay">
-    <div class="menu-card">
-      <h1>🔥 TIME RACER 90s 🔥</h1>
-      <input type="text" id="playerName" maxlength="12" placeholder="PILOTO" value="RACER">
-      <button id="startRaceBtn">🚗 START RACE 🚗</button>
-      <div class="highscore-text">🏁 MEJOR PUNTUACIÓN 🏁<br><span id="menuBest">0</span></div>
-      <div class="footer-tip">← → | ESQUIVA COCHES | 1 VIDA EXTRA</div>
-    </div>
+</div>
+
+<div id="menuOverlay" class="menu-overlay">
+  <div class="menu-card">
+    <h1>🔥 TIME RACER 90s 🔥</h1>
+    <input type="text" id="playerName" maxlength="12" placeholder="PILOTO" value="RACER">
+    <button id="startRaceBtn">🚗 START RACE 🚗</button>
+    <div class="highscore-text">🏁 MEJOR PUNTUACIÓN 🏁<br><span id="menuBest">0</span></div>
+    <div class="footer-tip">← → | ESQUIVA COCHES | 1 VIDA EXTRA</div>
   </div>
 </div>
 
@@ -264,7 +284,7 @@
     let leftPressed = false, rightPressed = false;
     let touchLeft = false, touchRight = false;
     
-    // Elementos DOM
+    // Elementos DOM (actualizados)
     const scoreSpan = document.getElementById('scoreValue');
     const livesSpan = document.getElementById('livesValue');
     const timeSpan = document.getElementById('timeValue');
@@ -479,7 +499,6 @@
               enemies.splice(i,1);
               i--;
               updateUI();
-              // Efecto visual de escudo
             } else {
               // Sin vidas -> game over
               gameActive = false;
@@ -517,7 +536,6 @@
         menuBestSpan.innerText = bestScore;
       }
       updateUI();
-      // Mostrar mensaje de victoria en el canvas (se renderizará)
     }
     
     function updateUI() {
@@ -628,17 +646,10 @@
         flashAlpha -= 0.05;
       }
       
-      // Velocímetro retro
-      ctx.font = "bold 16px 'Courier New'";
+      // Velocímetro retro (pequeño, no molesto)
+      ctx.font = "bold 14px 'Courier New'";
       ctx.fillStyle = "#ffcc66";
-      ctx.fillText(`⚡ ${Math.floor(speed*5.5)} km/h`, LEFT_BORDER+10, 45);
-      
-      // Vidas extra visual (corazón)
-      if(lives > 1) {
-        ctx.fillStyle = "#ff5566";
-        ctx.font = "18px monospace";
-        ctx.fillText("❤️ EXTRA", width-70, 45);
-      }
+      ctx.fillText(`⚡ ${Math.floor(speed*5.5)} km/h`, LEFT_BORDER+10, 35);
       
       // Mensajes de fin de carrera o game over
       if(!gameActive && raceFinished) {
@@ -768,4 +779,4 @@
   })();
 </script>
 </body>
-</html>
+  </html>
