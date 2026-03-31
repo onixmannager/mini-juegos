@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>Roller Coin · 3 Vidas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, shrink-to-fit=no">
+  <title>Roller Coin · 3 Vidas · 60 segundos</title>
   <style>
     * {
       margin: 0;
@@ -14,7 +14,7 @@
     }
 
     body {
-      background: linear-gradient(145deg, #0b2b2f, #031016);
+      background: linear-gradient(145deg, #0a2a2a, #031010);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -23,135 +23,155 @@
       padding: 20px;
     }
 
-    .game-container {
-      background: rgba(0, 0, 0, 0.5);
-      border-radius: 56px;
-      padding: 20px;
-      backdrop-filter: blur(6px);
-      box-shadow: 0 20px 35px rgba(0,0,0,0.5);
+    /* Shell principal: todo fuera del canvas */
+    .game-shell {
+      max-width: 850px;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      border-radius: 64px;
+      padding: 20px 20px 24px 20px;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6);
+      transition: all 0.2s;
     }
 
-    .game-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-
+    /* Panel de estadísticas (fuera del canvas) */
     .stats-panel {
       background: rgba(0, 0, 0, 0.75);
-      border: 2px solid #ffcc88;
-      border-radius: 60px;
-      padding: 8px 28px;
+      backdrop-filter: blur(12px);
+      border: 2px solid #ffaa44;
+      border-radius: 80px;
+      padding: 10px 20px;
       display: flex;
-      gap: 30px;
       flex-wrap: wrap;
       justify-content: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
     }
 
     .stat {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 1.2rem;
+      gap: 10px;
+      font-size: 1.1rem;
       font-weight: bold;
-      color: #ffefcf;
-      text-shadow: 2px 2px 0 #5a3a00;
+      color: #ffdd99;
+      text-shadow: 2px 2px 0 #5a3a1a;
     }
 
-    .stat span:first-child { font-size: 1.5rem; }
+    .stat span:first-child {
+      font-size: 1.3rem;
+    }
+
     .stat span:last-child {
-      background: #1f1a0f;
+      background: #2a2a1a;
       padding: 4px 14px;
       border-radius: 40px;
-      min-width: 55px;
+      min-width: 60px;
       text-align: center;
-      border: 1px solid #ffaa66;
+    }
+
+    /* Wrapper del canvas: centrado y con borde */
+    .canvas-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 6px 0 18px;
+      border-radius: 40px;
+      background: #0a1217;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255,255,200,0.1);
+      padding: 12px;
+      position: relative;
     }
 
     canvas {
       display: block;
-      margin: 0 auto;
-      border-radius: 32px;
-      box-shadow: 0 0 0 5px #ffbb66, 0 12px 28px black;
+      width: 100%;
+      height: auto;
+      max-width: 550px;      /* Canvas más pequeño y centrado */
+      border-radius: 24px;
+      box-shadow: 0 0 0 4px #ffaa44, 0 0 0 8px #2a2a1a;
+      background-color: #0f2c38;
       cursor: pointer;
       touch-action: none;
     }
 
-    .difficulty-bar {
+    /* Barra de controles táctiles (fuera del canvas) */
+    .touch-command-bar {
       display: flex;
-      gap: 20px;
-      background: rgba(0,0,0,0.5);
-      padding: 5px 20px;
-      border-radius: 50px;
-    }
-
-    .diff-btn {
-      background: #2a2a1a;
-      border: none;
-      padding: 6px 20px;
-      border-radius: 40px;
-      font-family: monospace;
-      font-weight: bold;
-      font-size: 1rem;
-      color: #ffdd99;
-      cursor: pointer;
-      transition: 0.1s;
-      box-shadow: 0 3px 0 #553300;
-    }
-    .diff-btn.active {
-      background: #ffaa44;
-      color: #1f2a0a;
-      box-shadow: 0 2px 0 #884400;
-      transform: translateY(1px);
-    }
-
-    .control-buttons {
-      display: flex;
-      gap: 20px;
-      margin-top: 8px;
-    }
-    .ctrl-btn {
-      background: #2a2a1a;
-      border: 2px solid #ffbb66;
-      border-radius: 50px;
-      padding: 8px 24px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      font-family: monospace;
-      color: #ffdd99;
-      cursor: pointer;
-      transition: 0.05s linear;
-      box-shadow: 0 4px 0 #553300;
-    }
-    .ctrl-btn:active { transform: translateY(2px); }
-
-    .touch-lanes {
-      display: flex;
-      gap: 30px;
       justify-content: center;
-      margin-top: 10px;
+      gap: 32px;
+      margin-top: 20px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(18px);
+      border-radius: 100px;
+      padding: 14px 20px;
+      border: 1px solid #ffaa66;
     }
-    .lane-btn {
-      background: #2a2a1a;
-      border: 2px solid #ffaa66;
-      border-radius: 60px;
-      width: 80px;
-      padding: 8px 0;
-      font-size: 1.3rem;
+
+    .touch-btn {
+      background: rgba(25, 25, 35, 0.95);
+      backdrop-filter: blur(8px);
+      border: 2px solid #ffaa44;
+      border-radius: 70px;
+      width: 70px;
+      height: 70px;
+      font-size: 2.2rem;
       font-weight: bold;
-      color: #ffdd99;
+      color: #ffdd88;
       text-align: center;
-      cursor: pointer;
-      box-shadow: 0 4px 0 #553300;
+      line-height: 66px;
+      box-shadow: 0 6px 0 #5a3a1a;
       transition: 0.05s linear;
-    }
-    .lane-btn:active { transform: translateY(2px); }
-
-    @media (min-width: 701px) {
-      .touch-lanes { display: none; }
+      touch-action: manipulation;
+      cursor: pointer;
     }
 
+    .touch-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #5a3a1a;
+    }
+
+    /* En escritorio ocultamos la barra táctil */
+    @media (min-width: 780px) {
+      .touch-command-bar {
+        display: none;
+      }
+      .game-shell {
+        max-width: 750px;
+      }
+    }
+
+    /* Ajustes móviles */
+    @media (max-width: 779px) {
+      .game-shell {
+        padding: 16px 14px 20px;
+      }
+      .stats-panel {
+        padding: 8px 16px;
+        gap: 16px;
+      }
+      .stat {
+        font-size: 1rem;
+        gap: 6px;
+      }
+      .stat span:last-child {
+        padding: 4px 10px;
+        min-width: 50px;
+      }
+      .touch-btn {
+        width: 65px;
+        height: 65px;
+        font-size: 2rem;
+        line-height: 60px;
+      }
+      .touch-command-bar {
+        gap: 24px;
+      }
+    }
+
+    /* Menú flotante sobre el canvas */
     .menu-overlay {
       position: absolute;
       inset: 0;
@@ -161,89 +181,140 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      border-radius: 32px;
+      border-radius: 24px;
     }
+
     .menu-card {
       background: linear-gradient(145deg, #232018, #0e0c08);
       border: 4px solid #ffbb66;
       border-radius: 56px;
-      padding: 28px 20px;
+      padding: 28px 24px;
       text-align: center;
-      width: 300px;
+      width: 320px;
+      box-shadow: 0 0 30px rgba(255,170,68,0.4);
     }
+
     .menu-card h1 {
       font-size: 1.9rem;
       color: #ffcc66;
       text-shadow: 3px 3px 0 #5a3a00;
+      margin-bottom: 16px;
     }
+
+    .difficulty-bar {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin: 12px 0;
+    }
+
+    .diff-btn {
+      background: #2a2a1a;
+      border: 2px solid #ffaa44;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #ffdd99;
+      cursor: pointer;
+      transition: 0.1s;
+      box-shadow: 0 3px 0 #553300;
+    }
+
+    .diff-btn.active {
+      background: #ffaa44;
+      color: #1f2a0a;
+      box-shadow: 0 2px 0 #884400;
+      transform: translateY(1px);
+    }
+
     .menu-card button {
       background: #ffaa44;
       border: none;
-      padding: 10px;
+      padding: 12px;
       width: 100%;
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       font-weight: bold;
-      border-radius: 40px;
-      margin-top: 15px;
       font-family: monospace;
+      border-radius: 60px;
+      color: #1e1a0c;
+      margin-top: 12px;
       cursor: pointer;
-      box-shadow: 0 4px 0 #7a4400;
+      box-shadow: 0 4px 0 #7a3a1a;
+      transition: 0.05s linear;
     }
-    .menu-card button:active { transform: translateY(2px); }
-    .highscore-text { margin-top: 20px; color: #ffdd99; background: #00000066; border-radius: 30px; padding: 8px; }
-    .footer { font-size: 0.7rem; margin-top: 12px; color: #ccaa77; text-align: center; }
+
+    .menu-card button:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #7a3a1a;
+    }
+
+    .highscore-text {
+      margin-top: 18px;
+      color: #ffdd99;
+      background: #00000066;
+      padding: 8px;
+      border-radius: 30px;
+    }
+
+    .footer-tip {
+      font-size: 0.7rem;
+      margin-top: 12px;
+      color: #ffcc88;
+    }
   </style>
 </head>
 <body>
-<div class="game-container">
-  <div class="game-wrapper">
-    <div class="stats-panel">
-      <div class="stat"><span>🪙</span><span id="scoreValue">0</span></div>
-      <div class="stat"><span>❤️</span><span id="livesValue">3</span></div>
-      <div class="stat"><span>⏱️</span><span id="timerValue">60</span></div>
-      <div class="stat"><span>🏆</span><span id="bestValue">0</span></div>
-    </div>
+<div class="game-shell">
+  <!-- Panel de estadísticas (fuera del canvas) -->
+  <div class="stats-panel">
+    <div class="stat"><span>🪙</span><span id="scoreValue">0</span></div>
+    <div class="stat"><span>❤️</span><span id="livesValue">3</span></div>
+    <div class="stat"><span>⏱️</span><span id="timerValue">60</span></div>
+    <div class="stat"><span>🏆</span><span id="bestValue">0</span></div>
+  </div>
 
-    <div style="position: relative;">
-      <canvas id="gameCanvas" width="600" height="700"></canvas>
-      <div id="menuOverlay" class="menu-overlay">
-        <div class="menu-card">
-          <h1>⚡ ROLLER COIN</h1>
-          <div class="difficulty-bar" style="margin: 15px auto; justify-content: center;">
-            <button id="diffEasy" class="diff-btn active">🍃 FÁCIL</button>
-            <button id="diffMed" class="diff-btn">⚡ MEDIA</button>
-          </div>
-          <button id="startBtn">🎲 ¡RUEDA 60 SEGUNDOS! 🎲</button>
-          <div class="highscore-text">🏅 RÉCORD: <span id="menuBest">0</span></div>
-          <div class="footer">🖱️ Flechas ← → · Botones táctiles<br>🔹 Atrapa monedas, 3 vidas, 60 segundos</div>
+  <!-- Wrapper del canvas (centrado y más pequeño) -->
+  <div class="canvas-wrapper" style="position: relative;">
+    <canvas id="gameCanvas" width="500" height="600"></canvas>
+    <div id="menuOverlay" class="menu-overlay">
+      <div class="menu-card">
+        <h1>⚡ ROLLER COIN</h1>
+        <div class="difficulty-bar">
+          <button id="diffEasy" class="diff-btn active">🍃 FÁCIL</button>
+          <button id="diffMed" class="diff-btn">⚡ MEDIA</button>
         </div>
+        <button id="startBtn">🎲 ¡RUEDA 60 SEGUNDOS! 🎲</button>
+        <div class="highscore-text">🏅 RÉCORD: <span id="menuBest">0</span></div>
+        <div class="footer-tip">← → · A/D · Toca flechas<br>🔹 Atrapa monedas, 3 vidas</div>
       </div>
     </div>
+  </div>
 
-    <div class="touch-lanes">
-      <button class="lane-btn" id="moveLeftBtn">◀ IZQ</button>
-      <button class="lane-btn" id="moveRightBtn">DER ▶</button>
-    </div>
-    <div class="control-buttons">
-      <button id="resetGameBtn" class="ctrl-btn">🔄 REINICIAR</button>
-    </div>
+  <!-- Barra de controles táctiles (fuera del canvas) -->
+  <div class="touch-command-bar">
+    <button class="touch-btn" id="moveLeftBtn">◀</button>
+    <button class="touch-btn" id="moveRightBtn">▶</button>
   </div>
 </div>
 
 <script>
   (function() {
-    // ---------- CONFIGURACIÓN ----------
+    // ---------- CONFIGURACIÓN CANVAS ----------
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const width = 600, height = 700;
-    canvas.width = width; canvas.height = height;
+    const width = 500;
+    const height = 600;
+    canvas.width = width;
+    canvas.height = height;
 
-    // Parámetros del juego
+    // ---------- PARÁMETROS DEL JUEGO ----------
     const LANES = 5;
     const LANE_WIDTH = width / LANES;
-    const BALL_RADIUS = 22;
-    const COIN_RADIUS = 16;
-    const BALL_Y = height - 60;
+    const BALL_RADIUS = 18;
+    const COIN_RADIUS = 14;
+    const BALL_Y = height - 55;
 
     let ballLane = 2;
     let coins = [];
@@ -258,7 +329,7 @@
     let gameStartTime = 0;
     let lastSpawnTime = 0;
 
-    // Parámetros de dificultad
+    // Dificultad
     let difficulty = "easy";
     let coinFallSpeed = 0;
     let coinSpawnInterval = 0;
@@ -266,17 +337,17 @@
 
     function setDifficultyParams() {
       if(difficulty === "easy") {
-        coinFallSpeed = 160;
-        coinSpawnInterval = 0.9;
+        coinFallSpeed = 150;
+        coinSpawnInterval = 0.95;
         scoreMultiplier = 1;
       } else {
-        coinFallSpeed = 320;
-        coinSpawnInterval = 0.45;
+        coinFallSpeed = 300;
+        coinSpawnInterval = 0.48;
         scoreMultiplier = 1.5;
       }
     }
 
-    // UI Elements
+    // ---------- UI ELEMENTOS ----------
     const scoreSpan = document.getElementById('scoreValue');
     const livesSpan = document.getElementById('livesValue');
     const timerSpan = document.getElementById('timerValue');
@@ -286,11 +357,10 @@
     const startBtn = document.getElementById('startBtn');
     const diffEasyBtn = document.getElementById('diffEasy');
     const diffMedBtn = document.getElementById('diffMed');
-    const resetGameBtn = document.getElementById('resetGameBtn');
     const moveLeftBtn = document.getElementById('moveLeftBtn');
     const moveRightBtn = document.getElementById('moveRightBtn');
 
-    // Highscore local
+    // Cargar highscore
     try {
       let stored = localStorage.getItem('rollercoin_high');
       if(stored) highScore = parseInt(stored);
@@ -310,7 +380,7 @@
       }
     }
 
-    // Sonido simple
+    // ---------- SONIDOS ----------
     let audioCtx = null;
     function initAudio() {
       if(!audioCtx) {
@@ -345,8 +415,21 @@
       osc.start();
       osc.stop(now+0.18);
     }
+    function playStartSound() {
+      if(!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 660;
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now+0.25);
+      osc.start();
+      osc.stop(now+0.22);
+    }
 
-    // Lógica de monedas
+    // ---------- LÓGICA DE MONEDAS ----------
     function spawnCoin() {
       if(!gameActive) return;
       let lane = Math.floor(Math.random() * LANES);
@@ -363,7 +446,6 @@
         let c = coins[i];
         c.y += coinFallSpeed * deltaSec;
         
-        // Si la moneda pasa el fondo sin ser recogida → perder vida
         if(c.y + COIN_RADIUS > height + 20) {
           coins.splice(i,1);
           if(gameActive) {
@@ -378,7 +460,6 @@
           continue;
         }
         
-        // Colisión con la bola
         let ballX = ballLane * LANE_WIDTH + LANE_WIDTH/2;
         let coinX = c.lane * LANE_WIDTH + LANE_WIDTH/2;
         let distX = Math.abs(ballX - coinX);
@@ -395,7 +476,6 @@
       }
     }
 
-    // Generador de monedas basado en tiempo
     function coinGenerator(nowSec) {
       if(!gameActive) return;
       let elapsed = nowSec - gameStartTime;
@@ -406,7 +486,7 @@
       }
     }
 
-    // Temporizador de 60 segundos
+    // ---------- TEMPORIZADOR ----------
     function startTimer() {
       if(timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(() => {
@@ -442,16 +522,16 @@
 
     function drawEndMessage(msg, isWin) {
       draw();
-      ctx.font = "bold 26px monospace";
+      ctx.font = "bold 24px monospace";
       ctx.fillStyle = isWin ? "#ccff88" : "#ff8866";
       ctx.shadowBlur = 0;
       ctx.fillText(msg, width/2 - ctx.measureText(msg).width/2, height/2 - 40);
-      ctx.font = "16px monospace";
+      ctx.font = "14px monospace";
       ctx.fillStyle = "#ffdd99";
       ctx.fillText("Volviendo al menú...", width/2-100, height/2+20);
     }
 
-    // Movimiento
+    // ---------- MOVIMIENTO ----------
     function moveBallLeft() {
       if(!gameActive) return;
       if(ballLane > 0) ballLane--;
@@ -461,7 +541,7 @@
       if(ballLane < LANES-1) ballLane++;
     }
 
-    // Dibujo
+    // ---------- DIBUJO ----------
     function draw() {
       ctx.clearRect(0, 0, width, height);
       let grad = ctx.createLinearGradient(0, 0, 0, height);
@@ -494,8 +574,8 @@
         ctx.arc(coinX-3, coinY-3, 5, 0, Math.PI*2);
         ctx.fill();
         ctx.fillStyle = "gold";
-        ctx.font = "bold 18px monospace";
-        ctx.fillText("🪙", coinX-10, coinY+7);
+        ctx.font = "bold 16px monospace";
+        ctx.fillText("🪙", coinX-9, coinY+6);
         ctx.shadowBlur = 0;
       }
       
@@ -523,12 +603,12 @@
       ctx.fill();
       ctx.shadowBlur = 0;
       
-      ctx.font = "12px monospace";
+      ctx.font = "11px monospace";
       ctx.fillStyle = "#ffcc88";
-      ctx.fillText(`Dificultad: ${difficulty.toUpperCase()}  x${scoreMultiplier}`, 15, 35);
+      ctx.fillText(`Dificultad: ${difficulty.toUpperCase()}  x${scoreMultiplier}`, 12, 28);
     }
 
-    // Game Loop
+    // ---------- GAME LOOP ----------
     function gameLoop(nowMs) {
       if(!gameActive) return;
       requestAnimationFrame(gameLoop);
@@ -543,7 +623,7 @@
       draw();
     }
 
-    // Reset completo
+    // ---------- REINICIO DEL JUEGO ----------
     function resetGame() {
       if(timerInterval) clearInterval(timerInterval);
       gameActive = false;
@@ -567,6 +647,7 @@
     function startGame() {
       initAudio();
       if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      playStartSound();
       resetGame();
       menuOverlay.style.display = 'none';
     }
@@ -581,7 +662,7 @@
       draw();
     }
 
-    // Dificultad UI
+    // ---------- DIFICULTAD UI ----------
     function setDifficultyUI(level) {
       difficulty = level;
       if(level === "easy") {
@@ -596,18 +677,25 @@
     diffEasyBtn.addEventListener('click', () => setDifficultyUI("easy"));
     diffMedBtn.addEventListener('click', () => setDifficultyUI("medium"));
 
-    // Controles
+    // ---------- CONTROLES (TECLADO + TÁCTIL) ----------
     window.addEventListener('keydown', (e) => {
       if(!gameActive) return;
-      if(e.key === 'ArrowLeft') { moveBallLeft(); e.preventDefault(); }
-      else if(e.key === 'ArrowRight') { moveBallRight(); e.preventDefault(); }
+      if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        moveBallLeft();
+        e.preventDefault();
+      } else if(e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        moveBallRight();
+        e.preventDefault();
+      }
     });
+
+    // Botones táctiles
     moveLeftBtn.addEventListener('click', () => moveBallLeft());
     moveRightBtn.addEventListener('click', () => moveBallRight());
     moveLeftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveBallLeft(); });
     moveRightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveBallRight(); });
 
-    // Mouse/touch en canvas para movimiento
+    // Movimiento por ratón/touch sobre el canvas (extra)
     canvas.addEventListener('mousemove', (e) => {
       if(!gameActive) return;
       const rect = canvas.getBoundingClientRect();
@@ -629,14 +717,9 @@
     });
     canvas.addEventListener('touchstart', (e) => e.preventDefault());
 
-    // Botón reiniciar
-    resetGameBtn.addEventListener('click', () => {
-      if(gameActive) {
-        endGame("🔄 Reiniciando...", false);
-        setTimeout(() => startGame(), 600);
-      } else {
-        showMenu();
-      }
+    // Click en canvas para mostrar menú si el juego terminó
+    canvas.addEventListener('click', () => {
+      if(!gameActive && menuOverlay.style.display !== 'flex') showMenu();
     });
 
     startBtn.addEventListener('click', () => {
@@ -644,7 +727,7 @@
       startGame();
     });
 
-    // Inicializar menú
+    // Inicializar con menú
     setDifficultyUI("easy");
     draw();
     showMenu();
