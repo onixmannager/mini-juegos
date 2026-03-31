@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>Snake Time Attack · 60 segundos para ganar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, shrink-to-fit=no">
+  <title>Snake Time Attack · 60 segundos para ganar (edición limpia)</title>
   <style>
     * {
       margin: 0;
@@ -14,7 +14,7 @@
     }
 
     body {
-      background: linear-gradient(145deg, #0a1a1f, #021016);
+      background: linear-gradient(145deg, #0a2a1f, #03120e);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -23,18 +23,22 @@
       padding: 20px;
     }
 
-    /* Contenedor principal */
-    .game-wrapper {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
+    /* SHELL PRINCIPAL: todo fuera del canvas */
+    .game-shell {
+      max-width: 900px;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      border-radius: 64px;
+      padding: 20px 20px 24px 20px;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6);
+      transition: all 0.2s;
     }
 
-    /* Panel de estadísticas fuera del canvas */
+    /* PANEL DE ESTADÍSTICAS (fuera del canvas) */
     .stats-panel {
       background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(12px);
       border: 2px solid #88ff44;
       border-radius: 60px;
       padding: 12px 24px;
@@ -43,6 +47,7 @@
       flex-wrap: wrap;
       justify-content: center;
       box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      margin-bottom: 24px;
     }
 
     .stat {
@@ -61,56 +66,68 @@
 
     .stat span:last-child {
       background: #1a2a1a;
-      padding: 4px 12px;
+      padding: 4px 16px;
       border-radius: 40px;
       min-width: 70px;
       text-align: center;
     }
 
-    .game-container {
-      position: relative;
-      border-radius: 28px;
-      box-shadow: 0 20px 35px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,200,0.1);
-      background: #000;
-      display: inline-block;
+    /* WRAPPER DEL CANVAS: lo centra y le da espacio visual */
+    .canvas-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0 18px 0;
+      border-radius: 40px;
+      background: #0a1a12;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255,255,200,0.1);
+      padding: 12px;
     }
 
     canvas {
       display: block;
       width: 100%;
       height: auto;
-      border-radius: 20px;
+      max-width: 500px;        /* Canvas más pequeño y centrado */
+      border-radius: 24px;
       box-shadow: 0 0 0 4px #33cc66, 0 0 0 8px #1a3a2a;
+      background-color: #0a1f1a;
       cursor: pointer;
     }
 
-    /* Controles táctiles para móvil */
-    .touch-controls {
+    /* BARRA DE CONTROLES TÁCTILES (fuera del canvas, inferior) */
+    .touch-command-bar {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-top: 16px;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(18px);
+      border-radius: 100px;
+      padding: 14px 20px;
+      border: 1px solid #88ff66;
     }
 
     .touch-row {
       display: flex;
       justify-content: center;
-      gap: 12px;
+      gap: 20px;
     }
 
     .touch-btn {
-      background: rgba(20,30,25,0.85);
-      backdrop-filter: blur(12px);
+      background: rgba(20, 30, 25, 0.95);
+      backdrop-filter: blur(8px);
       border: 2px solid #88ff44;
-      border-radius: 60px;
-      width: 60px;
-      height: 60px;
-      font-size: 2rem;
+      border-radius: 70px;
+      width: 70px;
+      height: 70px;
+      font-size: 2.2rem;
       font-weight: bold;
       color: #ccff88;
       text-align: center;
-      line-height: 56px;
-      box-shadow: 0 4px 0 #2a5a2a;
+      line-height: 66px;
+      box-shadow: 0 6px 0 #2a5a2a;
       transition: 0.05s linear;
       touch-action: manipulation;
       cursor: pointer;
@@ -118,25 +135,53 @@
 
     .touch-btn:active {
       transform: translateY(3px);
-      box-shadow: 0 1px 0 #2a5a2a;
+      box-shadow: 0 2px 0 #2a5a2a;
     }
 
-    @media (min-width: 701px) {
-      .touch-controls {
+    /* En escritorio ocultamos la barra táctil (se usa teclado) */
+    @media (min-width: 780px) {
+      .touch-command-bar {
         display: none;
+      }
+      .game-shell {
+        max-width: 750px;
       }
     }
 
+    /* Ajustes móviles: más espacio y botones cómodos */
+    @media (max-width: 779px) {
+      .game-shell {
+        padding: 16px 14px 20px;
+      }
+      .stats-panel {
+        padding: 8px 18px;
+        gap: 18px;
+      }
+      .stat {
+        font-size: 1rem;
+      }
+      .touch-btn {
+        width: 65px;
+        height: 65px;
+        font-size: 2rem;
+        line-height: 60px;
+      }
+      .touch-row {
+        gap: 18px;
+      }
+    }
+
+    /* MENÚ FLOTANTE (sobre el canvas) */
     .menu-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0, 0, 0, 0.85);
       backdrop-filter: blur(12px);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 100;
-      border-radius: 20px;
+      border-radius: 24px;
     }
 
     .menu-card {
@@ -145,7 +190,7 @@
       border-radius: 48px;
       padding: 28px 24px;
       text-align: center;
-      width: 320px;
+      width: 300px;
       box-shadow: 0 0 30px rgba(136,255,68,0.4);
     }
 
@@ -208,7 +253,8 @@
   </style>
 </head>
 <body>
-<div class="game-wrapper">
+<div class="game-shell">
+  <!-- PANEL DE ESTADÍSTICAS (fuera del canvas) -->
   <div class="stats-panel">
     <div class="stat">
       <span>🍎</span>
@@ -224,7 +270,8 @@
     </div>
   </div>
 
-  <div class="game-container">
+  <!-- WRAPPER que contiene el canvas centrado y más pequeño -->
+  <div class="canvas-wrapper" style="position: relative;">
     <canvas id="snakeCanvas" width="400" height="400"></canvas>
     <div id="menuOverlay" class="menu-overlay">
       <div class="menu-card">
@@ -237,7 +284,8 @@
     </div>
   </div>
 
-  <div class="touch-controls">
+  <!-- BARRA DE CONTROLES TÁCTILES (separada, fuera del canvas) -->
+  <div class="touch-command-bar" id="touch-controls">
     <div class="touch-row">
       <button class="touch-btn" id="btnUp">▲</button>
     </div>
@@ -607,7 +655,7 @@
     
     canvas.addEventListener('contextmenu', (e)=>e.preventDefault());
     
-    // Inicializar con menú
+    // Inicializar con menú (mostrar overlay y estado inactivo)
     resetGame();
     gameActive = false;
     if(gameLoopInterval) clearInterval(gameLoopInterval);
