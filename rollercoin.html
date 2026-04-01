@@ -120,34 +120,6 @@
       margin-bottom: 16px;
     }
 
-    .difficulty-bar {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-      margin: 12px 0;
-    }
-
-    .diff-btn {
-      background: #2a2a1a;
-      border: 2px solid #ffaa44;
-      padding: 8px 18px;
-      border-radius: 40px;
-      font-family: monospace;
-      font-weight: bold;
-      font-size: 1rem;
-      color: #ffdd99;
-      cursor: pointer;
-      transition: 0.1s;
-      box-shadow: 0 3px 0 #553300;
-    }
-
-    .diff-btn.active {
-      background: #ffaa44;
-      color: #1f2a0a;
-      box-shadow: 0 2px 0 #884400;
-      transform: translateY(1px);
-    }
-
     .menu-card button {
       background: #ffaa44;
       border: none;
@@ -182,6 +154,19 @@
       margin-top: 12px;
       color: #ffcc88;
     }
+
+    /* Badge de dificultad fija (solo visual) */
+    .difficulty-badge {
+      background: #ffaa44;
+      color: #1f2a0a;
+      padding: 5px 12px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 10px;
+      font-family: monospace;
+    }
   </style>
 </head>
 <body>
@@ -200,10 +185,7 @@
     <div id="menuOverlay" class="menu-overlay">
       <div class="menu-card">
         <h1>⚡ ROLLER COIN</h1>
-        <div class="difficulty-bar">
-          <button id="diffEasy" class="diff-btn active">🍃 FÁCIL</button>
-          <button id="diffMed" class="diff-btn">⚡ MEDIA</button>
-        </div>
+        <div class="difficulty-badge">⚡ MODO ARCADE ⚡</div>
         <button id="startBtn">🎲 ¡RUEDA 60 SEGUNDOS! 🎲</button>
         <div class="highscore-text">🏅 RÉCORD: <span id="menuBest">0</span></div>
         <div class="footer-tip">👆 Desliza sobre la pantalla para mover la bola<br>🔹 Atrapa monedas, 3 vidas, 60 segundos</div>
@@ -222,7 +204,7 @@
     canvas.width = width;
     canvas.height = height;
 
-    // ---------- PARÁMETROS DEL JUEGO ----------
+    // ---------- PARÁMETROS DEL JUEGO (DIFICULTAD FIJA: MEDIO) ----------
     const LANES = 5;
     const LANE_WIDTH = width / LANES;
     const BALL_RADIUS = 18;
@@ -242,23 +224,10 @@
     let gameStartTime = 0;
     let lastSpawnTime = 0;
 
-    // Dificultad
-    let difficulty = "easy";
-    let coinFallSpeed = 0;
-    let coinSpawnInterval = 0;
-    let scoreMultiplier = 1;
-
-    function setDifficultyParams() {
-      if(difficulty === "easy") {
-        coinFallSpeed = 150;
-        coinSpawnInterval = 0.95;
-        scoreMultiplier = 1;
-      } else {
-        coinFallSpeed = 300;
-        coinSpawnInterval = 0.48;
-        scoreMultiplier = 1.5;
-      }
-    }
+    // Parámetros fijos: dificultad MEDIA (velocidad alta, spawn rápido, multiplicador 1.5x)
+    const FIXED_COIN_FALL_SPEED = 300;      // píxeles/segundo
+    const FIXED_COIN_SPAWN_INTERVAL = 0.48;  // segundos entre monedas
+    const FIXED_SCORE_MULTIPLIER = 1.5;
 
     // ---------- UI ELEMENTOS ----------
     const scoreSpan = document.getElementById('scoreValue');
@@ -268,8 +237,6 @@
     const menuBestSpan = document.getElementById('menuBest');
     const menuOverlay = document.getElementById('menuOverlay');
     const startBtn = document.getElementById('startBtn');
-    const diffEasyBtn = document.getElementById('diffEasy');
-    const diffMedBtn = document.getElementById('diffMed');
 
     // Cargar highscore
     try {
@@ -355,7 +322,7 @@
     function updateCoins(deltaSec) {
       for(let i=0; i<coins.length; i++) {
         let c = coins[i];
-        c.y += coinFallSpeed * deltaSec;
+        c.y += FIXED_COIN_FALL_SPEED * deltaSec;
         
         if(c.y + COIN_RADIUS > height + 20) {
           coins.splice(i,1);
@@ -378,7 +345,7 @@
         let collisionDist = BALL_RADIUS + COIN_RADIUS;
         if(distX < collisionDist && distY < collisionDist && !c.collected) {
           c.collected = true;
-          score += Math.floor(10 * scoreMultiplier);
+          score += Math.floor(10 * FIXED_SCORE_MULTIPLIER);
           updateUI();
           playCoinSound();
           coins.splice(i,1);
@@ -390,7 +357,7 @@
     function coinGenerator(nowSec) {
       if(!gameActive) return;
       let elapsed = nowSec - gameStartTime;
-      let nextSpawn = lastSpawnTime + coinSpawnInterval;
+      let nextSpawn = lastSpawnTime + FIXED_COIN_SPAWN_INTERVAL;
       if(elapsed >= nextSpawn) {
         spawnCoin();
         lastSpawnTime = elapsed;
@@ -530,7 +497,7 @@
       
       ctx.font = "11px monospace";
       ctx.fillStyle = "#ffcc88";
-      ctx.fillText(`Dificultad: ${difficulty.toUpperCase()}  x${scoreMultiplier}`, 12, 28);
+      ctx.fillText(`MODO ARCADE  x${FIXED_SCORE_MULTIPLIER}`, 12, 28);
     }
 
     // ---------- GAME LOOP ----------
@@ -562,7 +529,6 @@
       gameStartTime = performance.now() / 1000;
       lastFrameTime = 0;
       updateUI();
-      setDifficultyParams();
       gameActive = true;
       startTimer();
       animationId = requestAnimationFrame(gameLoop);
@@ -586,21 +552,6 @@
       menuBestSpan.innerText = highScore;
       draw();
     }
-
-    // ---------- DIFICULTAD UI ----------
-    function setDifficultyUI(level) {
-      difficulty = level;
-      if(level === "easy") {
-        diffEasyBtn.classList.add('active');
-        diffMedBtn.classList.remove('active');
-      } else {
-        diffMedBtn.classList.add('active');
-        diffEasyBtn.classList.remove('active');
-      }
-      setDifficultyParams();
-    }
-    diffEasyBtn.addEventListener('click', () => setDifficultyUI("easy"));
-    diffMedBtn.addEventListener('click', () => setDifficultyUI("medium"));
 
     // ---------- CONTROLES (SÓLO TÁCTIL/MOUSE SOBRE CANVAS) ----------
     // Teclado opcional para escritorio
@@ -639,12 +590,10 @@
     });
 
     startBtn.addEventListener('click', () => {
-      setDifficultyUI(difficulty);
       startGame();
     });
 
     // Inicializar con menú
-    setDifficultyUI("easy");
     draw();
     showMenu();
   })();
