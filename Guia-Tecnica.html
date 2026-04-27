@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Informe Técnico Lynx Protocol - Especificaciones y Seguridad</title>
+    <style>
+        :root {
+            --bg: #080c12;
+            --surface: #0f1620;
+            --surface2: #161f2c;
+            --border: #253040;
+            --accent: #00d4aa;
+            --accent2: #f0b90b;
+            --danger: #ff5252;
+            --warn: #ff8c42;
+            --oracle: #a78bfa;
+            --oracle-dim: rgba(167,139,250,0.12);
+            --code-bg: #0b1119;
+            --text: #cdd6e4;
+            --text2: #8b9bb4;
+            --text3: #5a6a82;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+            --radius: 10px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.6);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.7;
+            padding: 20px 16px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* header */
+        .tech-header {
+            text-align: center;
+            padding: 16px 0 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+        .tech-header h1 {
+            font-size: clamp(1.8rem, 5vw, 2.4rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--accent2), #f7d774);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .tech-header .sub {
+            color: var(--text2);
+            font-size: 0.9rem;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        /* section */
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px 20px;
+            box-shadow: var(--shadow);
+        }
+        .section.oracle-section {
+            border-color: rgba(167,139,250,0.35);
+            box-shadow: var(--shadow), 0 0 0 1px rgba(167,139,250,0.1);
+        }
+        .section h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--accent2);
+            border-left: 4px solid var(--accent);
+            padding-left: 14px;
+        }
+        .section.oracle-section h2 {
+            color: var(--oracle);
+            border-left-color: var(--oracle);
+        }
+        .section h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 20px 0 10px;
+            color: #e0e8f0;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 4px;
+        }
+        .section p, .section li {
+            font-size: 0.9rem;
+            color: var(--text2);
+        }
+        .section ul, .section ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+        .section li {
+            margin-bottom: 6px;
+        }
+
+        /* code blocks */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            line-height: 1.6;
+            color: #b4c6e0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .code-block .keyword { color: #c792ea; }
+        .code-block .function { color: #82aaff; }
+        .code-block .string { color: #c3e88d; }
+        .code-block .comment { color: #546e7a; font-style: italic; }
+        .code-block .type { color: #f78c6c; }
+        .code-block .oracle-hl { color: #a78bfa; }
+
+        /* tables */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 12px 0;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            min-width: 600px;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th {
+            background: var(--surface2);
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text2);
+            vertical-align: top;
+        }
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+        .tag-sec { background: rgba(0,212,170,0.15); color: var(--accent); }
+        .tag-warn { background: rgba(255,140,66,0.15); color: var(--warn); }
+        .tag-danger { background: rgba(255,82,82,0.15); color: var(--danger); }
+        .tag-oracle { background: rgba(167,139,250,0.15); color: var(--oracle); }
+
+        .security-note {
+            background: rgba(255,82,82,0.08);
+            border-left: 4px solid var(--danger);
+            padding: 12px 16px;
+            margin: 14px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.85rem;
+        }
+        .info-note {
+            background: rgba(0,212,170,0.08);
+            border-left: 4px solid var(--accent);
+            padding: 12px 16px;
+            margin: 14px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.85rem;
+        }
+        .oracle-note {
+            background: var(--oracle-dim);
+            border-left: 4px solid var(--oracle);
+            padding: 12px 16px;
+            margin: 14px 0;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.85rem;
+            color: var(--text2);
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .step {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .step-num {
+            background: var(--accent);
+            color: #000;
+            font-weight: 800;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.8rem;
+        }
+        .step-num.oracle { background: var(--oracle); }
+        .step-content {
+            background: var(--surface2);
+            border-radius: 6px;
+            padding: 10px 16px;
+            flex: 1;
+            font-size: 0.85rem;
+        }
+
+        /* Oracle mode toggle visual */
+        .oracle-modes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 16px 0;
+        }
+        @media (max-width: 600px) {
+            .oracle-modes { grid-template-columns: 1fr; }
+        }
+        .oracle-mode-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+        .oracle-mode-card.active {
+            border-color: rgba(167,139,250,0.5);
+            background: rgba(167,139,250,0.07);
+        }
+        .oracle-mode-card h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--oracle);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .oracle-mode-card p {
+            font-size: 0.82rem;
+            color: var(--text2);
+            line-height: 1.5;
+        }
+
+        @media (max-width: 600px) {
+            .container { gap: 20px; }
+            .section { padding: 16px 12px; }
+            .code-block { font-size: 0.7rem; padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="tech-header">
+        <h1>🦊 Lynx Protocol — Informe Técnico</h1>
+        <div class="sub">Especificaciones · Seguridad · Flujos · Contratos · Off-chain Matching · Oráculo</div>
+        <p style="color:var(--text3); margin-top:8px; font-size:0.8rem;">
+            Documento orientado al desarrollo seguro. Cada componente se detalla con validaciones, protecciones y casos límite.
+        </p>
+    </div>
+
+    <!-- 1. STACK TECNOLÓGICO -->
+    <div class="section">
+        <h2>⚙️ Stack Tecnológico</h2>
+        <div class="table-wrap">
+            <table>
+                <tr><th>Componente</th><th>Tecnología</th><th>Descripción</th></tr>
+                <tr><td>Blockchain</td><td>Solana (Mainnet)</td><td>Transacciones rápidas, bajo costo. Programas en Rust/Anchor.</td></tr>
+                <tr><td>Contratos</td><td>Anchor (Rust)</td><td>EventFactory, Vault, OrderBook, LynxToken (SPL).</td></tr>
+                <tr><td>Matching Engine</td><td>Node.js / Rust (off-chain)</td><td>Servidor centralizado que recibe órdenes firmadas, empareja y envía tx a Solana.</td></tr>
+                <tr><td>Base de datos</td><td>PostgreSQL + Redis</td><td>Almacena ordenes activas, eventos históricos, snapshots.</td></tr>
+                <tr><td>Indexador</td><td>Geyser plugin / Helius webhook</td><td>Escucha cambios on-chain para mantener estado del order book.</td></tr>
+                <tr><td>Frontend</td><td>Next.js + Wallet Adapter</td><td>Interfaz que solicita firmas al usuario y envía órdenes al matching engine.</td></tr>
+                <tr><td>Oráculo</td><td>Switchboard (Solana) / Admin manual</td><td>Resolución de eventos: oráculo on-chain configurable o intervención manual por admin. Seleccionable por evento.</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- 2. CONTRATOS ON-CHAIN -->
+    <div class="section">
+        <h2>🧱 Contratos On-Chain (Anchor)</h2>
+
+        <h3>2.1 EventFactory</h3>
+        <p>Programa principal para crear eventos estándar y duelos 1v1. Emite tokens de posición como SPL tokens.</p>
+        <div class="code-block"><span class="comment">// Accounts</span>
+<span class="keyword">pub struct</span> <span class="type">CreateEvent</span> {
+    <span class="keyword">pub</span> admin: Signer,
+    <span class="keyword">pub</span> event_account: Account<<span class="type">Event</span>>,
+    <span class="keyword">pub</span> token_mint_yes: Account<<span class="type">Mint</span>>,
+    <span class="keyword">pub</span> token_mint_no: Account<<span class="type">Mint</span>>,
+    <span class="keyword">pub</span> vault: Account<<span class="type">Vault</span>>,
+    ...
+}
+<span class="comment">// Event struct</span>
+<span class="keyword">pub struct</span> <span class="type">Event</span> {
+    pub admin: Pubkey,
+    pub event_type: EventType, <span class="comment">// Standard o Duel1v1</span>
+    pub parent_event: Option<Pubkey>, <span class="comment">// solo duelos</span>
+    pub state: EventState, <span class="comment">// Open, Active, Cutoff, Resolved, Expired</span>
+    pub resolution: Option<bool>,
+    pub total_sol: u64,
+    pub fee_basis_points: u16, <span class="comment">// 5 a 50 (0.05% - 0.5%)</span>
+    <span class="oracle-hl">pub resolution_mode: ResolutionMode, // AdminManual | SwitchboardOracle</span>
+    <span class="oracle-hl">pub oracle_feed: Option<Pubkey>,      // pubkey del feed de Switchboard (si aplica)</span>
+    <span class="oracle-hl">pub oracle_target_value: Option<i64>, // umbral que determina YES/NO</span>
+    <span class="oracle-hl">pub oracle_condition: OracleCondition, // GreaterThan | LessThan | Equals</span>
+}</div>
+        <div class="security-note">
+            🔒 <strong>Seguridad:</strong> Solo el admin designado puede resolver eventos en modo <code>AdminManual</code>. En modo <code>SwitchboardOracle</code>, la resolución la dispara cualquier keeper que presente el feed válido; el contrato verifica la firma del feed y que sea el account configurado en el evento.
+        </div>
+
+        <h3>2.2 Vault</h3>
+        <p>Custodia SOL de cada evento. Implementa extracción del 15% en el momento del settlement.</p>
+        <div class="code-block"><span class="keyword">pub fn</span> <span class="function">settle_event</span>(ctx: Context<SettleEvent>) -> <span class="type">Result<()></span> {
+    <span class="keyword">let</span> vault = &<span class="keyword">mut</span> ctx.accounts.vault;
+    <span class="keyword">let</span> total = vault.total_sol;
+    <span class="keyword">let</span> protocol_share = total * <span class="string">15</span> / <span class="string">100</span>;
+    <span class="keyword">let</span> winner_share = total - protocol_share;
+
+    <span class="comment">// Transferir 15% a tesorería</span>
+    <span class="function">transfer_sol</span>(&ctx.accounts.vault, &ctx.accounts.treasury, protocol_share)?;
+    <span class="comment">// Distribuir resto basado en tokens ganadores</span>
+    <span class="function">distribute_to_winners</span>(winner_share, ...)?;
+    <span class="comment">// Quemar tokens perdedores</span>
+    <span class="function">burn_losing_tokens</span>(...)?;
+}</div>
+        <div class="security-note">
+            🔒 <strong>Protección anti-reentrada:</strong> Solana evita reentrada por diseño, pero se agrega <code>settled: bool</code> como flag para evitar doble cobro.
+        </div>
+
+        <h3>2.3 OrderBook (On-Chain)</h3>
+        <p>Registra órdenes firmadas por los usuarios. El matching se realiza off-chain; la ejecución llama a una instrucción <code>fill_order</code> que verifica firma y cantidades.</p>
+        <div class="code-block"><span class="keyword">pub fn</span> <span class="function">place_order</span>(ctx: Context<PlaceOrder>, order: OrderData, signature: Vec<u8>) {
+    <span class="comment">// Verificar que la firma corresponde al usuario</span>
+    <span class="keyword">require</span>!(signature.verify(&user.key().to_bytes(), &order.hash()), <span class="string">ErrorCode::InvalidSignature</span>);
+    <span class="comment">// Almacenar orden con status 'open'</span>
+}
+<span class="keyword">pub fn</span> <span class="function">fill_order</span>(ctx: Context<FillOrder>, maker_order_id: u64, taker_order_data: OrderData, taker_sig: Vec<u8>) {
+    <span class="comment">// Validar firma taker, emparejar maker, transferir SOL/tokens atómicamente</span>
+}</div>
+        <div class="info-note">
+            💡 <strong>Off-chain matching:</strong> El servidor escucha órdenes, encuentra coincidencias y envía la transacción <code>fill_order</code> a Solana. Así se ahorra gas en matching y se mantiene atomicidad on-chain.
+        </div>
+
+        <h3>2.4 LynxToken (SPL)</h3>
+        <p>Token de gobernanza/dividendos con lógica de snapshot y burn. Implementa distribución vía Merkle tree o iteración limitada.</p>
+        <div class="code-block"><span class="comment">// Snapshot en cut-off guarda array de (holder, balance) en una cuenta comprimida</span>
+<span class="keyword">pub fn</span> <span class="function">snapshot_and_mint</span>(ctx: Context<Snapshot>, holders: Vec<HolderBalance>) {
+    <span class="keyword">let</span> total_supply = <span class="function">calculate_reward</span>();
+    <span class="function">mint_to</span>(&ctx.accounts.lynx_mint, &ctx.accounts.reward_vault, total_supply);
+    <span class="keyword">for</span> h <span class="keyword">in</span> holders {
+        <span class="function">transfer</span>(reward_vault, h.address, h.proportional_amount);
+    }
+}</div>
+    </div>
+
+    <!-- 3. OFF-CHAIN MATCHING ENGINE -->
+    <div class="section">
+        <h2>📡 Off-Chain Matching Engine</h2>
+        <p>Servidor que centraliza el libro de órdenes para velocidad. No custodia fondos; solo coordina transacciones.</p>
+        <h3>3.1 API endpoints (protegidos con rate limiting y autenticación por wallet)</h3>
+        <div class="table-wrap">
+            <table>
+                <tr><th>Endpoint</th><th>Método</th><th>Descripción</th></tr>
+                <tr><td>/order/submit</td><td>POST</td><td>Recibe orden firmada, la añade al libro. Devuelve order_id.</td></tr>
+                <tr><td>/order/cancel</td><td>POST</td><td>Cancelación firmada, elimina del libro antes de ejecución.</td></tr>
+                <tr><td>/orderbook/{event_id}</td><td>GET</td><td>Retorna órdenes activas (bids/asks) para UI.</td></tr>
+                <tr><td>/match/execute</td><td>INTERNAL</td><td>El motor encuentra coincidencias y construye tx de fill_order.</td></tr>
+            </table>
+        </div>
+        <h3>3.2 Flujo de matching</h3>
+        <div class="flow-steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content">Usuario A firma una orden de venta (mensaje con precio, cantidad, expiración) y la envía a /order/submit.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content">El motor valida firma, nonce (para evitar replay) y la almacena en Redis/Postgres con status <code>open</code>.</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content">Usuario B envía orden de compra compatible. El motor detecta match y llama internamente a <code>fill_order</code>.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-content">Construye transacción Solana con las dos órdenes, verifica nuevamente firmas, y envía a la red.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-content">On-chain: <code>fill_order</code> verifica firmas, realiza transferencia de SOL del vault al vendedor, y tokens al comprador. Ambas órdenes se marcan <code>filled</code>.</div></div>
+        </div>
+        <div class="security-note">
+            🔒 <strong>Protección contra front-running:</strong> Las órdenes incluyen un <code>max_slot</code> y un compromiso de precio. El motor rechaza órdenes con slot expirado y no revela detalles hasta el match.
+        </div>
+    </div>
+
+    <!-- 4. FLUJO TÉCNICO DE DUELO 1V1 -->
+    <div class="section">
+        <h2>⚔️ Flujo Técnico Seguro del Duelo 1v1</h2>
+        <div class="flow-steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Usuario A crea duelo:</strong> Invoca <code>create_duel</code> en EventFactory. Elige monto X SOL, posición A. Se bloquea X SOL desde su wallet al vault del evento.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Evento en estado Abierto:</strong> Solo existe posición A. Nadie puede vender tokens (restricción en OrderBook).</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Usuario B entra:</strong> Llama a <code>enter_duel</code>. Debe bloquear exactamente X SOL (mismo monto). Se emiten tokens de posición B y LIBRE. Estado cambia a Activo.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Estado Activo — trading P2P habilitado:</strong> Cualquier wallet puede comprar/vender tokens A, B o LIBRE mediante el order book. El SOL de cada trade se añade al vault.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-content"><strong>Expiración sin rival:</strong> Si evento supera tiempo límite sin que B entre, función <code>expire_duel</code> devuelve SOL a A (menos fee de tx) y cierra.</div></div>
+            <div class="step"><div class="step-num">6</div><div class="step-content"><strong>Resolución (Evento padre):</strong> Cuando el evento general padre se resuelve (vía admin manual <em>o</em> oráculo Switchboard según el modo configurado), el duelo hereda resultado. El vault ejecuta <code>settle</code> automáticamente.</div></div>
+        </div>
+        <div class="security-note">
+            🔒 <strong>Atomicidad:</strong> La entrada de B es atómica: transfiere SOL y recibe tokens en una sola instrucción. Si algo falla, toda la tx se revierte.
+        </div>
+    </div>
+
+    <!-- 5. ORÁCULO DE RESOLUCIÓN (NUEVA SECCIÓN) -->
+    <div class="section oracle-section">
+        <h2>🔮 Oráculo de Resolución de Eventos</h2>
+        <p>Cada evento puede configurarse con uno de dos modos de resolución al momento de su creación. El modo es <strong>inmutable una vez activo</strong> y queda registrado on-chain en la cuenta del evento.</p>
+
+        <div class="oracle-modes">
+            <div class="oracle-mode-card active">
+                <h4>🛡️ Modo 1 — Admin Manual</h4>
+                <p>El admin designado del evento resuelve manualmente llamando a <code>resolve_event</code> con el resultado (<code>true</code> / <code>false</code>). Requiere la firma de la wallet admin (idealmente multisig). Indicado para eventos subjetivos o sin feed de datos disponible.</p>
+            </div>
+            <div class="oracle-mode-card active">
+                <h4>⚡ Modo 2 — Switchboard Oracle</h4>
+                <p>Se configura un <code>oracle_feed</code> (Pubkey de un aggregator de Switchboard) y un umbral de resolución (<code>oracle_target_value</code> + condición). Cualquier keeper puede disparar <code>resolve_via_oracle</code> cuando el feed cumple la condición. No requiere acción del admin.</p>
+            </div>
+        </div>
+
+        <h3>5.1 Struct y Tipos</h3>
+        <div class="code-block"><span class="comment">// Enum de modo de resolución</span>
+<span class="keyword">pub enum</span> <span class="type">ResolutionMode</span> {
+    <span class="oracle-hl">AdminManual</span>,          <span class="comment">// resolución firmada por admin</span>
+    <span class="oracle-hl">SwitchboardOracle</span>,    <span class="comment">// resolución automática vía feed</span>
+}
+
+<span class="comment">// Condición de comparación contra el valor del oráculo</span>
+<span class="keyword">pub enum</span> <span class="type">OracleCondition</span> {
+    <span class="oracle-hl">GreaterThan</span>,
+    <span class="oracle-hl">LessThan</span>,
+    <span class="oracle-hl">Equals</span>,
+}
+
+<span class="comment">// Campos añadidos al struct Event</span>
+<span class="keyword">pub struct</span> <span class="type">Event</span> {
+    ...
+    <span class="oracle-hl">pub resolution_mode: ResolutionMode,</span>
+    <span class="oracle-hl">pub oracle_feed: Option<Pubkey>,        // aggregator Switchboard</span>
+    <span class="oracle-hl">pub oracle_target_value: Option<i64>,   // ej: 5000_00 = $5000 con 2 dec.</span>
+    <span class="oracle-hl">pub oracle_condition: OracleCondition,</span>
+    <span class="oracle-hl">pub oracle_resolved_at: Option<i64>,    // timestamp UNIX de resolución</span>
+}</div>
+
+        <h3>5.2 Instrucción: resolve_event (Admin Manual)</h3>
+        <div class="code-block"><span class="keyword">pub fn</span> <span class="function">resolve_event</span>(ctx: Context<<span class="type">ResolveEvent</span>>, outcome: bool) -> <span class="type">Result<()></span> {
+    <span class="keyword">let</span> event = &<span class="keyword">mut</span> ctx.accounts.event_account;
+
+    <span class="comment">// Solo permitido en modo AdminManual</span>
+    <span class="keyword">require</span>!(
+        event.resolution_mode == <span class="oracle-hl">ResolutionMode::AdminManual</span>,
+        <span class="string">ErrorCode::WrongResolutionMode</span>
+    );
+    <span class="comment">// Solo el admin del evento puede firmar</span>
+    <span class="keyword">require</span>!(
+        ctx.accounts.signer.key() == event.admin,
+        <span class="string">ErrorCode::Unauthorized</span>
+    );
+    <span class="keyword">require</span>!(event.state == <span class="type">EventState::Cutoff</span>, <span class="string">ErrorCode::InvalidState</span>);
+
+    event.resolution = <span class="type">Some</span>(outcome);
+    event.state = <span class="type">EventState::Resolved</span>;
+    <span class="function">emit</span>!(<span class="type">EventResolved</span> { event_id: event.key(), outcome, mode: <span class="string">"admin"</span> });
+    <span class="type">Ok</span>(())
+}</div>
+
+        <h3>5.3 Instrucción: resolve_via_oracle (Switchboard)</h3>
+        <div class="code-block"><span class="keyword">pub fn</span> <span class="function">resolve_via_oracle</span>(ctx: Context<<span class="type">ResolveViaOracle</span>>) -> <span class="type">Result<()></span> {
+    <span class="keyword">let</span> event = &<span class="keyword">mut</span> ctx.accounts.event_account;
+
+    <span class="comment">// Solo permitido en modo SwitchboardOracle</span>
+    <span class="keyword">require</span>!(
+        event.resolution_mode == <span class="oracle-hl">ResolutionMode::SwitchboardOracle</span>,
+        <span class="string">ErrorCode::WrongResolutionMode</span>
+    );
+    <span class="keyword">require</span>!(event.state == <span class="type">EventState::Cutoff</span>, <span class="string">ErrorCode::InvalidState</span>);
+
+    <span class="comment">// Verificar que el account del feed es el configurado en el evento</span>
+    <span class="keyword">require</span>!(
+        ctx.accounts.switchboard_feed.key() == event.oracle_feed.<span class="function">unwrap</span>(),
+        <span class="string">ErrorCode::InvalidOracleFeed</span>
+    );
+
+    <span class="comment">// Leer el valor del aggregator de Switchboard (via CPI o deserialización)</span>
+    <span class="keyword">let</span> feed = &ctx.accounts.switchboard_feed;
+    <span class="keyword">let</span> feed_value: i64 = <span class="oracle-hl">AggregatorAccountData::get_result</span>(&feed.to_account_info())
+        ?.<span class="function">try_into</span>()
+        .<span class="function">map_err</span>(|_| <span class="string">ErrorCode::OracleReadFailed</span>)?;
+
+    <span class="comment">// Evaluar condición configurada en el evento</span>
+    <span class="keyword">let</span> target = event.oracle_target_value.<span class="function">unwrap</span>();
+    <span class="keyword">let</span> outcome = <span class="keyword">match</span> event.oracle_condition {
+        <span class="type">OracleCondition::GreaterThan</span> => feed_value > target,
+        <span class="type">OracleCondition::LessThan</span>    => feed_value < target,
+        <span class="type">OracleCondition::Equals</span>       => feed_value == target,
+    };
+
+    event.resolution = <span class="type">Some</span>(outcome);
+    event.state = <span class="type">EventState::Resolved</span>;
+    event.oracle_resolved_at = <span class="type">Some</span>(Clock::get()?.<span class="function">unix_timestamp</span>());
+    <span class="function">emit</span>!(<span class="type">EventResolved</span> { event_id: event.key(), outcome, mode: <span class="string">"switchboard"</span> });
+    <span class="type">Ok</span>(())
+}
+
+<span class="comment">// Accounts necesarios para resolve_via_oracle</span>
+<span class="keyword">pub struct</span> <span class="type">ResolveViaOracle</span> {
+    <span class="keyword">pub</span> keeper: Signer,                       <span class="comment">// cualquier wallet puede ejecutar</span>
+    <span class="keyword">pub</span> event_account: Account<<span class="type">Event</span>>,
+    <span class="comment">/// CHECK: se valida manualmente que coincide con event.oracle_feed</span>
+    <span class="keyword">pub</span> <span class="oracle-hl">switchboard_feed: AccountInfo</span>,
+}</div>
+
+        <h3>5.4 Flujo completo de resolución según modo</h3>
+        <div class="flow-steps">
+            <div class="step">
+                <div class="step-num oracle">1</div>
+                <div class="step-content"><strong>Creación del evento:</strong> El admin configura <code>resolution_mode</code>. Si elige <code>SwitchboardOracle</code>, debe indicar la pubkey del feed y la condición de resolución (ej: <code>SOL/USD &gt; 200</code>).</div>
+            </div>
+            <div class="step">
+                <div class="step-num oracle">2</div>
+                <div class="step-content"><strong>Estado Cutoff alcanzado:</strong> El evento cierra nuevas posiciones. A partir de aquí se puede ejecutar la resolución.</div>
+            </div>
+            <div class="step">
+                <div class="step-num oracle">3a</div>
+                <div class="step-content"><strong>[AdminManual]</strong> El admin (o multisig) firma y llama a <code>resolve_event(outcome)</code> directamente. El contrato valida su firma y escribe el resultado.</div>
+            </div>
+            <div class="step">
+                <div class="step-num oracle">3b</div>
+                <div class="step-content"><strong>[SwitchboardOracle]</strong> Un keeper (bot off-chain, o cualquier wallet) detecta que el feed de Switchboard cumple la condición y llama a <code>resolve_via_oracle</code>. El contrato lee el feed on-chain y calcula el resultado de forma trustless.</div>
+            </div>
+            <div class="step">
+                <div class="step-num oracle">4</div>
+                <div class="step-content"><strong>Settlement automático:</strong> Una vez el evento está en estado <code>Resolved</code>, cualquiera puede llamar a <code>settle_event</code> en el Vault para distribuir fondos. Emite el evento <code>EventResolved</code> para notificar al indexador.</div>
+            </div>
+        </div>
+
+        <div class="oracle-note">
+            🔮 <strong>Feeds de Switchboard recomendados (Mainnet):</strong> Los feeds públicos de Switchboard incluyen pares como SOL/USD, BTC/USD, ETH/USD y datos deportivos/meteorológicos a través de su red de oráculos. Consultar el directorio en <code>app.switchboard.xyz</code> para seleccionar el feed adecuado para cada tipo de evento.
+        </div>
+
+        <h3>5.5 Modo híbrido: Fallback Admin</h3>
+        <p>Para mayor robustez, se puede implementar un <strong>fallback</strong>: si el oráculo no resuelve en un plazo definido (<code>oracle_deadline</code>), el admin recupera la capacidad de resolver manualmente como salvaguarda de último recurso.</p>
+        <div class="code-block"><span class="comment">// Añadir al struct Event:</span>
+<span class="oracle-hl">pub oracle_deadline: Option<i64>,   // timestamp UNIX límite para el oráculo</span>
+
+<span class="comment">// En resolve_event (admin), añadir condición extra:</span>
+<span class="keyword">if</span> event.resolution_mode == <span class="type">ResolutionMode::SwitchboardOracle</span> {
+    <span class="keyword">let</span> now = Clock::get()?.unix_timestamp;
+    <span class="keyword">require</span>!(
+        now > event.oracle_deadline.<span class="function">unwrap_or</span>(i64::MAX),
+        <span class="string">ErrorCode::OracleDeadlineNotReached</span> <span class="comment">// el oráculo aún tiene tiempo</span>
+    );
+    <span class="comment">// Si el deadline pasó y el oráculo no resolvió, el admin puede intervenir</span>
+}</div>
+
+        <div class="security-note">
+            🔒 <strong>Seguridad del oráculo:</strong> (1) Solo se acepta el feed configurado en la creación del evento — imposible sustituirlo. (2) El valor del feed debe ser reciente (verificar <code>latestConfirmedRound.roundOpenTimestamp</code> dentro de un margen aceptable). (3) En modo Switchboard, el keeper no puede manipular el resultado: solo lee el estado on-chain del aggregator. (4) El fallback admin está protegido por el deadline, evitando que el admin resuelva prematuramente.
+        </div>
+
+        <h3>5.6 Tabla resumen de modos</h3>
+        <div class="table-wrap">
+            <table>
+                <tr>
+                    <th>Característica</th>
+                    <th><span class="tag tag-warn">Admin Manual</span></th>
+                    <th><span class="tag tag-oracle">Switchboard Oracle</span></th>
+                </tr>
+                <tr><td>¿Quién resuelve?</td><td>Admin designado (multisig)</td><td>Cualquier keeper + feed on-chain</td></tr>
+                <tr><td>Confianza requerida</td><td>Alta (en el admin)</td><td>Baja (trustless vía datos externos)</td></tr>
+                <tr><td>Velocidad</td><td>Depende del admin</td><td>Automática al cumplir condición</td></tr>
+                <tr><td>Tipo de evento ideal</td><td>Subjetivo, deportivo, moderado</td><td>Financiero (precios, datos numéricos)</td></tr>
+                <tr><td>Fallback admin disponible</td><td>N/A</td><td>Sí, tras <code>oracle_deadline</code></td></tr>
+                <tr><td>Config extra al crear</td><td>Solo wallet admin</td><td>Pubkey feed + target + condición</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- 5. TOKENS DE POSICIÓN -->
+    <div class="section">
+        <h2>🪙 Tokens de Posición (SPL)</h2>
+        <p>Cada evento crea sus propios mints (YES/NO para estándar; A/B/LIBRE para duelos). Características técnicas:</p>
+        <ul>
+            <li><strong>Decimales:</strong> 0 (cada token representa una unidad de participación, no fraccionable en este nivel).</li>
+            <li><strong>Transferibilidad:</strong> Sin restricciones (cualquier wallet puede recibir/enviar).</li>
+            <li><strong>Compra atómica al entrar:</strong> Al unirse a un duelo (Usuario B) o al comprar en el order book, el contrato <code>mint_to</code> directamente a la wallet del comprador.</li>
+            <li><strong>Quema final:</strong> En el settlement, los tokens de la posición perdedora se queman con <code>burn</code> de SPL.</li>
+        </ul>
+        <div class="info-note">
+            💡 <strong>¿Por qué no fraccionables?</strong> Simplifica la lógica de pago: ganadores reciben SOL proporcional al número de tokens que poseen.
+        </div>
+    </div>
+
+    <!-- 6. VAULT Y DISTRIBUCIÓN -->
+    <div class="section">
+        <h2>🏦 Vault y Distribución de Fondos</h2>
+        <ul>
+            <li><strong>Custodia separada:</strong> Cada evento tiene su propia cuenta vault (PDA derivada del event_id).</li>
+            <li><strong>15% de comisión:</strong> En <code>settle_event</code>, antes de repartir, se calcula el 15% del total del vault y se transfiere a una wallet de tesorería (controlada por multisig).</li>
+            <li><strong>Distribución a ganadores:</strong> El 85% restante se reparte entre los holders del token ganador. Se itera sobre una lista de holders (limitada a N para evitar límite de compute units; si son muchos, se usa un Merkle tree con reclamo posterior).</li>
+            <li><strong>Reclamo pull-over-push:</strong> Para eventos masivos, los ganadores llaman a <code>claim_winnings</code> con prueba de Merkle, evitando bucles largos.</li>
+        </ul>
+        <div class="security-note">
+            🔒 <strong>Protección:</strong> Solo la autoridad del programa (evento) puede iniciar el settle. El 15% no puede ser manipulado porque se calcula on-chain. Se verifica que <code>total_sol</code> coincida con el balance real del vault.
+        </div>
+    </div>
+
+    <!-- 7. LYNX TOKEN TÉCNICO -->
+    <div class="section">
+        <h2>🪙 Lynx Token — Especificación Técnica</h2>
+        <ul>
+            <li><strong>Estándar:</strong> SPL token (con metadatos Metaplex).</li>
+            <li><strong>Snapshot en cut-off:</strong> Una instrucción <code>snapshot</code> (llamada por un keeper) registra todos los holders de tokens de posición en ese instante. Guarda un array o raíz Merkle en una cuenta.</li>
+            <li><strong>Emisión:</strong> Se calcula un reward fijo por evento (governable) y se mintea proporcionalmente a los balances del snapshot.</li>
+            <li><strong>Dividendos:</strong> Un pool de SOL (del 15% + fees) se distribuye periódicamente a holders de LYNX. Implementación vía Merkle distribuidor o staking.</li>
+            <li><strong>Burn para acceso:</strong> Para entrar a eventos exclusivos, el usuario llama a <code>burn_lynx</code> que quema X LYNX y registra su acceso. El suministro se reduce, aumentando escasez.</li>
+        </ul>
+        <div class="info-note">
+            💡 <strong>Mecanismo anti-manipulación:</strong> El cut-off es un bloque específico (o timestamp) definido al crear el evento. Nadie puede comprar tokens después sin que se refleje en el snapshot.
+        </div>
+    </div>
+
+    <!-- 8. SEGURIDAD GENERAL -->
+    <div class="section">
+        <h2>🛡️ Seguridad y Mitigaciones</h2>
+        <div class="table-wrap">
+            <table>
+                <tr><th>Riesgo</th><th>Mitigación</th></tr>
+                <tr><td>Reentrada</td><td>Solana no permite reentrada cross-program; se usa flag de estado <code>settled</code> para evitar doble ejecución.</td></tr>
+                <tr><td>Front-running de órdenes</td><td>Las órdenes incluyen slot de expiración y se envían cifradas/commit-reveal en futuras versiones.</td></tr>
+                <tr><td>Manipulación del oráculo</td><td>Solo se acepta el feed de Switchboard configurado en la creación del evento. El admin no puede cambiar el feed una vez activo. El keeper solo lee datos on-chain.</td></tr>
+                <tr><td>Oráculo inactivo / feed caído</td><td>Mecanismo de fallback admin tras <code>oracle_deadline</code>. Opcionalmente, se puede requerir que el valor del feed sea reciente (max staleness).</td></tr>
+                <tr><td>Admin malicioso en modo manual</td><td>Se recomienda multisig (Serum Governance) para la wallet admin. Los eventos de alto valor deben usar modo oráculo.</td></tr>
+                <tr><td>Ataque de denegación de servicio (DoS)</td><td>Rate limiting en matching engine; transacciones on-chain con prioridad de fee.</td></tr>
+                <tr><td>Falsificación de firma</td><td>Todas las órdenes se verifican con <code>ed25519</code> contra la wallet del usuario.</td></tr>
+                <tr><td>Overflow/Underflow</td><td>Rust y Anchor lo previenen por defecto; se usan operaciones checked.</td></tr>
+                <tr><td>Admin keys comprometidas</td><td>Multisig (Serum Governance) para actualizaciones y resolución de eventos.</td></tr>
+                <tr><td>Snapshots imprecisos</td><td>Se usa el estado de la blockchain en un slot exacto; no depende de fuentes externas.</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- 9. DESPLIEGUE Y ACTUALIZACIONES -->
+    <div class="section">
+        <h2>🚀 Despliegue y Upgradability</h2>
+        <p>Los programas de Solana son inmutables una vez desplegados, pero se puede usar un patrón proxy:</p>
+        <ul>
+            <li><strong>Programa principal (EventFactory, Vault, OrderBook):</strong> Se despliega con una clave de upgrade authority (multisig) que permite migrar a nueva lógica.</li>
+            <li><strong>Estado separado:</strong> Las cuentas de datos (eventos, vaults) se almacenan en cuentas independientes, no en el código del programa, para preservar datos entre actualizaciones.</li>
+            <li><strong>Matching engine:</strong> Actualizable independientemente, siempre que mantenga compatibilidad con instrucciones on-chain.</li>
+            <li><strong>Integración Switchboard:</strong> La dependencia del SDK de Switchboard se fija a una versión específica. Actualizaciones del SDK requieren upgrade del programa con nueva autoridad multisig.</li>
+        </ul>
+    </div>
+
+    <!-- FOOTER -->
+    <div style="text-align:center; margin-top:10px; padding-bottom:20px; color:var(--text3); font-size:0.8rem; border-top:1px solid var(--border); padding-top:16px;">
+        Lynx Protocol — Especificaciones técnicas v1.1 · Oráculo añadido (AdminManual + Switchboard) · Construido con seguridad por diseño · 🦊
+    </div>
+</div>
+</body>
+        </html>
