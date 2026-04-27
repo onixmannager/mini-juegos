@@ -3,841 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Guía Visual Lynx Protocol - Responsive</title>
+    <title>Informe Técnico Lynx Protocol v2 — Con Oráculo</title>
     <style>
         :root {
-            --bg: #0a0e14;
-            --surface: #141b22;
-            --surface2: #1a2330;
-            --border: #263040;
-            --gold: #f0b90b;
-            --cyan: #00d4aa;
-            --magenta: #e0558b;
-            --blue: #4da6ff;
-            --orange: #ff8c42;
-            --purple: #9b72f2;
-            --red: #ff5252;
-            --green: #4cdf80;
-            --text: #d4dce8;
-            --text2: #8899b4;
-            --text3: #5c6e89;
-            --shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
-            --radius: 14px;
-            --radius-sm: 8px;
-            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --bg: #080c12;
+            --surface: #0f1620;
+            --surface2: #161f2c;
+            --border: #253040;
+            --accent: #00d4aa;
+            --accent2: #f0b90b;
+            --oracle: #e040fb;
+            --danger: #ff5252;
+            --warn: #ff8c42;
+            --code-bg: #0b1119;
+            --text: #cdd6e4;
+            --text2: #8b9bb4;
+            --text3: #5a6a82;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+            --radius: 10px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.6);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
             background: var(--bg);
-            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
             color: var(--text);
-            line-height: 1.6;
-            padding: 16px;
-            min-height: 100vh;
-            background-image:
-                radial-gradient(ellipse at 15% 20%, rgba(0, 180, 140, 0.04) 0%, transparent 55%),
-                radial-gradient(ellipse at 80% 65%, rgba(240, 160, 20, 0.04) 0%, transparent 55%),
-                radial-gradient(ellipse at 50% 85%, rgba(155, 100, 240, 0.03) 0%, transparent 55%);
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        .main-container {
-            max-width: 1300px;
-            width: 100%;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 28px;
-        }
-
-        /* HEADER */
-        .header {
-            text-align: center;
-            padding: 20px 12px 8px;
-            position: relative;
-        }
-        .header .icon-row {
-            font-size: 36px;
-            letter-spacing: 6px;
-            margin-bottom: 4px;
-        }
-        .header h1 {
-            font-size: clamp(1.5rem, 6vw, 2.2rem);
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, var(--gold), #f7d774, #f0b90b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1.3;
-        }
-        .header .badge-row {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-        .badge {
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            padding: 5px 12px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-        .badge-solana {
-            background: rgba(20, 241, 149, 0.12);
-            color: #14f195;
-            border: 1px solid rgba(20, 241, 149, 0.3);
-        }
-        .badge-offchain {
-            background: rgba(255, 140, 66, 0.12);
-            color: var(--orange);
-            border: 1px solid rgba(255, 140, 66, 0.3);
-        }
-        .badge-hybrid {
-            background: rgba(155, 114, 242, 0.12);
-            color: var(--purple);
-            border: 1px solid rgba(155, 114, 242, 0.3);
-        }
-
-        /* SECTION TITLES */
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: 0.01em;
-            margin-bottom: 14px;
-            color: var(--text);
-            flex-wrap: wrap;
-        }
-        .section-title .icon {
-            font-size: 1.3rem;
-        }
-        .section-title .line {
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-            border-radius: 1px;
-            min-width: 30px;
-        }
-
-        /* CARDS GRID */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
-        }
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 18px 20px;
-            transition: var(--transition);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
-            word-wrap: break-word;
-        }
-        .card:hover {
-            border-color: #3a5068;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.55);
-        }
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            border-radius: 4px 0 0 4px;
-        }
-        .card-accent-gold::before {
-            background: var(--gold);
-        }
-        .card-accent-cyan::before {
-            background: var(--cyan);
-        }
-        .card-accent-magenta::before {
-            background: var(--magenta);
-        }
-        .card-accent-blue::before {
-            background: var(--blue);
-        }
-        .card-accent-purple::before {
-            background: var(--purple);
-        }
-        .card-accent-orange::before {
-            background: var(--orange);
-        }
-        .card-accent-green::before {
-            background: var(--green);
-        }
-        .card h3 {
-            font-size: 0.95rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .card h3 .emoji {
-            font-size: 1.2rem;
-        }
-        .card p,
-        .card li {
-            font-size: 0.8rem;
-            color: var(--text2);
-            margin: 4px 0;
-        }
-        .card ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        .card ul li::before {
-            content: '▸ ';
-            color: var(--cyan);
-            font-weight: 700;
-        }
-
-        /* FLOW DIAGRAM */
-        .flow-section {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.7;
             padding: 20px 16px;
-            box-shadow: var(--shadow);
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            position: relative;
-        }
-        /* Scroll hint for mobile */
-        .flow-section::after {
-            content: "← Desliza para ver →";
-            display: none;
-            position: absolute;
-            bottom: 6px;
-            right: 12px;
-            font-size: 0.65rem;
-            color: var(--text3);
-            background: rgba(10, 14, 20, 0.7);
-            padding: 2px 10px;
-            border-radius: 10px;
-            pointer-events: none;
-            white-space: nowrap;
-        }
-        .flow-row {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: nowrap;
-            min-width: max-content;
-            padding: 8px 4px;
-            justify-content: flex-start;
-        }
-        .flow-node {
-            flex-shrink: 0;
-            background: var(--surface2);
-            border: 2px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 10px 14px;
-            text-align: center;
-            font-weight: 700;
-            font-size: 0.8rem;
-            min-width: 70px;
-            transition: var(--transition);
-            white-space: nowrap;
-        }
-        .flow-node.highlight {
-            border-color: var(--gold);
-            background: rgba(240, 185, 11, 0.08);
-            color: var(--gold);
-        }
-        .flow-node.cyan-node {
-            border-color: var(--cyan);
-            background: rgba(0, 212, 170, 0.08);
-            color: var(--cyan);
-        }
-        .flow-node.magenta-node {
-            border-color: var(--magenta);
-            background: rgba(224, 85, 139, 0.08);
-            color: var(--magenta);
-        }
-        .flow-node.orange-node {
-            border-color: var(--orange);
-            background: rgba(255, 140, 66, 0.08);
-            color: var(--orange);
-        }
-        .flow-node.green-node {
-            border-color: var(--green);
-            background: rgba(76, 223, 128, 0.08);
-            color: var(--green);
-        }
-        .flow-node.purple-node {
-            border-color: var(--purple);
-            background: rgba(155, 114, 242, 0.08);
-            color: var(--purple);
-        }
-        .flow-arrow {
-            flex-shrink: 0;
-            font-size: 1.2rem;
-            color: var(--text3);
-            font-weight: 700;
-            animation: pulse-arrow 2.2s ease-in-out infinite;
-        }
-        .flow-arrow.delay1 {
-            animation-delay: 0.4s;
-        }
-        .flow-arrow.delay2 {
-            animation-delay: 0.9s;
-        }
-        .flow-arrow.delay3 {
-            animation-delay: 1.4s;
-        }
-
-        @keyframes pulse-arrow {
-            0%,
-            100% {
-                opacity: 0.5;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 1;
-                transform: scale(1.25);
-            }
-        }
-
-        /* TABLE */
-        .table-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin: 12px 0 8px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-        }
-        .timeline-table {
-            width: 100%;
-            min-width: 600px;
-            border-collapse: collapse;
-            font-size: 0.8rem;
-        }
-        .timeline-table th {
-            background: var(--surface2);
-            padding: 10px 12px;
-            text-align: left;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-            color: var(--text);
-            border-bottom: 2px solid var(--border);
-            white-space: nowrap;
-        }
-        .timeline-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-            color: var(--text2);
-            vertical-align: top;
-        }
-        .timeline-table tr:hover td {
-            background: rgba(255, 255, 255, 0.015);
-        }
-        .tag {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-            white-space: nowrap;
-        }
-        .tag-yes {
-            background: rgba(76, 223, 128, 0.15);
-            color: var(--green);
-        }
-        .tag-no {
-            background: rgba(255, 82, 82, 0.15);
-            color: var(--red);
-        }
-        .tag-warn {
-            background: rgba(255, 140, 66, 0.15);
-            color: var(--orange);
-        }
-
-        /* REVENUE STRIP */
-        .revenue-strip {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
             justify-content: center;
         }
-        .revenue-card {
-            flex: 1 1 220px;
-            max-width: 340px;
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 18px 16px;
-            text-align: center;
-            transition: var(--transition);
-            word-wrap: break-word;
-        }
-        .revenue-card:hover {
-            border-color: #4a607a;
-        }
-        .revenue-card .big-icon {
-            font-size: 2rem;
-            margin-bottom: 6px;
-        }
-        .revenue-card h4 {
-            font-weight: 700;
-            font-size: 0.9rem;
-            margin-bottom: 4px;
-            line-height: 1.3;
-        }
-        .revenue-card .dest {
-            font-size: 0.73rem;
-            color: var(--purple);
-            font-weight: 600;
-            letter-spacing: 0.02em;
-        }
+        .container { max-width: 1100px; width: 100%; display: flex; flex-direction: column; gap: 32px; }
 
-        /* DIVIDER */
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 8px 0;
+        .tech-header {
+            text-align: center; padding: 16px 0 8px;
+            border-bottom: 1px solid var(--border); margin-bottom: 8px;
         }
-        .divider .diamond {
-            font-size: 0.9rem;
-            color: var(--gold);
+        .tech-header h1 {
+            font-size: clamp(1.8rem, 5vw, 2.4rem); font-weight: 800;
+            background: linear-gradient(135deg, var(--accent2), var(--oracle));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
-        .divider .dline {
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-            border-radius: 1px;
-        }
+        .tech-header .sub { color: var(--text2); font-size: 0.9rem; margin-top: 6px; font-weight: 500; }
 
-        /* highlight box */
-        .highlight-box {
-            background: rgba(240, 185, 11, 0.07);
-            border: 1px dashed rgba(240, 185, 11, 0.35);
-            border-radius: var(--radius-sm);
-            padding: 12px 16px;
-            margin-top: 12px;
-            font-size: 0.78rem;
-            color: #e8c84a;
-            word-wrap: break-word;
+        .section {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 24px 20px; box-shadow: var(--shadow);
         }
-        .info-dot {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: var(--blue);
-            color: #fff;
-            font-size: 0.65rem;
-            font-weight: 800;
-            text-align: center;
-            line-height: 16px;
-            cursor: help;
-            margin-left: 4px;
-            vertical-align: middle;
+        .section h2 {
+            font-size: 1.3rem; font-weight: 700; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 10px; color: var(--accent2);
+            border-left: 4px solid var(--oracle); padding-left: 14px;
         }
+        .section h3 {
+            font-size: 1.05rem; font-weight: 700; margin: 20px 0 10px;
+            color: #e0e8f0; border-bottom: 1px dashed var(--border); padding-bottom: 4px;
+        }
+        .section p, .section li { font-size: 0.9rem; color: var(--text2); }
+        .section ul, .section ol { padding-left: 20px; margin: 8px 0; }
+        .section li { margin-bottom: 6px; }
 
-        /* RESPONSIVE OVERRIDES */
-        @media (max-width: 800px) {
-            .cards-grid {
-                grid-template-columns: 1fr;
-            }
-            .revenue-strip {
-                gap: 12px;
-            }
-            .revenue-card {
-                flex: 1 1 100%;
-                max-width: 100%;
-            }
-            .flow-section::after {
-                display: block;
-            }
-            .flow-node {
-                padding: 8px 10px;
-                font-size: 0.72rem;
-                min-width: 60px;
-            }
-            .flow-arrow {
-                font-size: 1rem;
-            }
-            .timeline-table {
-                min-width: 500px;
-            }
+        .code-block {
+            background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+            padding: 16px; margin: 12px 0; overflow-x: auto;
+            font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6;
+            color: #b4c6e0; white-space: pre-wrap; word-break: break-word;
         }
+        .code-block .keyword { color: #c792ea; }
+        .code-block .function { color: #82aaff; }
+        .code-block .string { color: #c3e88d; }
+        .code-block .comment { color: #546e7a; font-style: italic; }
+        .code-block .type { color: #f78c6c; }
 
-        @media (max-width: 500px) {
-            body {
-                padding: 8px;
-            }
-            .main-container {
-                gap: 20px;
-            }
-            .header .icon-row {
-                font-size: 28px;
-                letter-spacing: 4px;
-            }
-            .badge {
-                font-size: 0.65rem;
-                padding: 4px 10px;
-            }
-            .card {
-                padding: 14px 16px;
-            }
-            .flow-node {
-                padding: 6px 8px;
-                font-size: 0.68rem;
-                min-width: 50px;
-            }
-            .flow-arrow {
-                font-size: 0.9rem;
-            }
-            .highlight-box {
-                font-size: 0.72rem;
-                padding: 10px 12px;
-            }
-            .timeline-table th,
-            .timeline-table td {
-                padding: 8px 6px;
-                font-size: 0.68rem;
-            }
+        .table-wrap { overflow-x: auto; margin: 12px 0; border-radius: 6px; border: 1px solid var(--border); }
+        table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 0.85rem; }
+        th {
+            background: var(--surface2); padding: 10px 14px; text-align: left;
+            font-weight: 700; color: var(--text); border-bottom: 2px solid var(--border); white-space: nowrap;
+        }
+        td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+        .tag {
+            display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem;
+            font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+        }
+        .tag-sec { background: rgba(0,212,170,0.15); color: var(--accent); }
+        .tag-oracle { background: rgba(224,64,251,0.2); color: var(--oracle); }
+        .tag-warn { background: rgba(255,140,66,0.15); color: var(--warn); }
+        .tag-danger { background: rgba(255,82,82,0.15); color: var(--danger); }
+
+        .security-note {
+            background: rgba(255,82,82,0.08); border-left: 4px solid var(--danger);
+            padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.85rem;
+        }
+        .info-note {
+            background: rgba(224,64,251,0.08); border-left: 4px solid var(--oracle);
+            padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; font-size: 0.85rem;
+        }
+        .flow-steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+        .step { display: flex; gap: 12px; align-items: flex-start; }
+        .step-num {
+            background: var(--oracle); color: #000; font-weight: 800; width: 28px; height: 28px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 0.8rem;
+        }
+        .step-content { background: var(--surface2); border-radius: 6px; padding: 10px 16px; flex: 1; font-size: 0.85rem; }
+        @media (max-width: 600px) {
+            .container { gap: 20px; }
+            .section { padding: 16px 12px; }
+            .code-block { font-size: 0.7rem; padding: 12px; }
         }
     </style>
 </head>
 <body>
-    <div class="main-container">
-
-        <!-- ==================== HEADER ==================== -->
-        <div class="header">
-            <div class="icon-row">🦊 ⚡ 🔷</div>
-            <h1>Lynx Protocol — Guía Visual de Arquitectura</h1>
-            <div class="badge-row">
-                <span class="badge badge-solana">🔗 On-Chain: Solana</span>
-                <span class="badge badge-offchain">⚡ Off-Chain: Matching Engine</span>
-                <span class="badge badge-hybrid">🔀 Modelo Híbrido</span>
-            </div>
-            <p style="color:var(--text3); margin-top:10px; font-size:0.8rem;">
-                🧭 Cada sección es una <strong>analogía visual</strong> para seguir el flujo del protocolo paso a paso.
-            </p>
-        </div>
-
-        <!-- ==================== ARQUITECTURA GENERAL ==================== -->
-        <div class="section-title">
-            <span class="icon">🏗️</span> ARQUITECTURA GENERAL
-            <span class="line"></span>
-        </div>
-        <div class="flow-section">
-            <div class="flow-row">
-                <div class="flow-node" style="font-size:0.9rem;">👤 Usuario</div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-node cyan-node">🖥️ Frontend / SDK</div>
-                <span class="flow-arrow delay1">→</span>
-                <div class="flow-node orange-node">⚡ Matching Engine<br><small>Off-Chain</small></div>
-                <span class="flow-arrow delay2">→</span>
-                <div class="flow-node highlight">🔗 Solana Blockchain<br><small>On-Chain</small></div>
-                <span class="flow-arrow delay3">→</span>
-                <div class="flow-node green-node">🏦 Vault (Custodia)</div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-node purple-node">💰 Settlement</div>
-            </div>
-            <p style="text-align:center; color:var(--text3); margin-top:14px; font-size:0.75rem;">
-                ⚡ <strong>Matching</strong> off-chain (rápido, sin gas) &nbsp;|&nbsp; 🔗 <strong>Ejecución + Custodia</strong> en Solana &nbsp;|&nbsp; 🪙 <strong>Denominador único:</strong> SOL
-            </p>
-        </div>
-
-        <!-- ==================== TIPOS DE EVENTO ==================== -->
-        <div class="section-title">
-            <span class="icon">🔷</span> TIPOS DE EVENTO
-            <span class="line"></span>
-        </div>
-        <div class="cards-grid">
-            <!-- Evento Estándar -->
-            <div class="card card-accent-gold">
-                <h3><span class="emoji">🏟️</span> Evento Estándar</h3>
-                <ul>
-                    <li>Creado por <strong>Admin</strong></li>
-                    <li>Dos posiciones: <span style="color:#4cdf80;">✅ YES</span> / <span style="color:#ff5252;">❌ NO</span></li>
-                    <li>Order book abierto a <strong>cualquier wallet</strong></li>
-                    <li>Resolución <strong>manual</strong> por Admin</li>
-                </ul>
-                <div style="margin-top:10px; font-size:0.73rem; color:var(--text3);">
-                    🎯 Evento público clásico → mercado de predicción abierto
-                </div>
-            </div>
-            <!-- Evento 1v1 -->
-            <div class="card card-accent-magenta">
-                <h3><span class="emoji">⚔️</span> Evento 1v1 (Duelo)</h3>
-                <ul>
-                    <li>Creado por <strong>usuarios</strong></li>
-                    <li>Siempre derivado de un <strong>evento general padre</strong></li>
-                    <li>Tres posiciones: <span style="color:#4da6ff;">🅰️ A</span> / <span style="color:#e0558b;">🅱️ B</span> / <span style="color:#9b72f2;">🆓 LIBRE</span></li>
-                    <li>Resolución <strong>automática</strong> (hereda del padre)</li>
-                    <li>Order book <strong>propio e independiente</strong></li>
-                </ul>
-                <div style="margin-top:10px; font-size:0.73rem; color:var(--text3);">
-                    🎯 Duelo entre dos posturas → hereda resultado del evento padre
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== FLUJO DEL 1v1 ==================== -->
-        <div class="section-title">
-            <span class="icon">⚔️</span> FLUJO DEL 1v1 — LÍNEA DE TIEMPO
-            <span class="line"></span>
-        </div>
-        <div class="flow-section">
-            <div class="flow-row">
-                <div class="flow-node orange-node">👤 Usuario A<br><small>Elige monto</small></div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-node highlight">✍️ Firma<br><small>SOL bloqueado</small></div>
-                <span class="flow-arrow delay1">→</span>
-                <div class="flow-node" style="border-color:#ff8c42;color:#ff8c42;">📌 Estado:<br><strong>ABIERTO</strong></div>
-                <span class="flow-arrow delay2">→</span>
-                <div class="flow-node cyan-node">👤 Usuario B<br><small>Entra al duelo</small></div>
-                <span class="flow-arrow delay3">→</span>
-                <div class="flow-node green-node">✅ Estado:<br><strong>ACTIVO</strong></div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-node purple-node">🏁 Evento padre<br><small>se resuelve</small></div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-node highlight">💰 Settlement<br><small>Automático</small></div>
-            </div>
-            <!-- Tabla de estados -->
-            <div class="table-wrapper">
-                <table class="timeline-table">
-                    <thead>
-                        <tr>
-                            <th>Estado</th>
-                            <th>Situación</th>
-                            <th>¿Puede vender?</th>
-                            <th>¿Qué pasa?</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><span class="tag tag-warn">ABIERTO</span></td>
-                            <td>Solo Usuario A, espera rival</td>
-                            <td><span class="tag tag-no">❌ NO</span></td>
-                            <td>SOL bloqueado. Nadie más puede vender aún.</td>
-                        </tr>
-                        <tr>
-                            <td><span class="tag tag-yes">ACTIVO</span></td>
-                            <td>Usuario B entró al duelo</td>
-                            <td><span class="tag tag-yes">✅ SÍ (P2P)</span></td>
-                            <td>Cualquier wallet puede comprar tokens si hay orden de venta.</td>
-                        </tr>
-                        <tr>
-                            <td><span class="tag tag-warn">EXPIRADO</span></td>
-                            <td>Evento cierra sin rival</td>
-                            <td><span class="tag tag-no">—</span></td>
-                            <td>Devuelve SOL a Usuario A (menos fees de tx).</td>
-                        </tr>
-                        <tr>
-                            <td><span class="tag tag-yes">RESUELTO</span></td>
-                            <td>Evento general padre resuelto</td>
-                            <td><span class="tag tag-no">—</span></td>
-                            <td>Settlement automático. Ganadores cobran del vault.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="highlight-box">
-                💡 <strong>Analogía:</strong> El 1v1 es como un <em>combate de boxeo</em>. El Usuario A sube al ring (firma, deposita SOL). Si nadie acepta el reto antes de la campana, se devuelve el dinero. Si el Usuario B sube al ring, el combate está <strong>ACTIVO</strong> y las apuestas laterales (P2P) pueden entrar. El ganador lo decide el evento padre (el "juez").
-            </div>
-        </div>
-
-        <!-- ==================== TOKENS + ORDER BOOK ==================== -->
-        <div class="section-title">
-            <span class="icon">🪙</span> TOKENS & ORDER BOOK
-            <span class="line"></span>
-        </div>
-        <div class="cards-grid">
-            <div class="card card-accent-cyan">
-                <h3><span class="emoji">🪙</span> Tokens de Posición</h3>
-                <ul>
-                    <li>Cada evento emite sus <strong>propios tokens</strong></li>
-                    <li>Al crear/entrar en duelo → <strong>compra atómica</strong> (una sola firma compra todos los tokens de tu posición)</li>
-                    <li>Tokens <strong>libremente transferibles</strong> a cualquier wallet</li>
-                    <li>Quien tiene el token al settlement → <strong>cobra si gana</strong></li>
-                </ul>
-                <div style="margin-top:10px; font-size:0.73rem; color:var(--text3);">
-                    🎯 Los tokens son el "boleto" que acredita tu posición.
-                </div>
-            </div>
-            <div class="card card-accent-orange">
-                <h3><span class="emoji">📖</span> Order Book (P2P Híbrido)</h3>
-                <ul>
-                    <li><strong>Matching off-chain</strong> → rápido, sin costo de gas</li>
-                    <li><strong>Ejecución on-chain</strong> → segura, verificable</li>
-                    <li>Funciona igual en eventos <strong>estándar</strong> y <strong>1v1</strong></li>
-                    <li>Cualquier wallet puede operar <strong>sin whitelist</strong></li>
-                    <li>SOL entra al <strong>vault del evento</strong> en cada trade</li>
-                </ul>
-                <div style="margin-top:10px; font-size:0.73rem; color:var(--text3);">
-                    🎯 Como un libro de órdenes de exchange, pero el matching se hace fuera de la blockchain.
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== VAULT ==================== -->
-        <div class="section-title">
-            <span class="icon">🏦</span> VAULT — CUSTODIA DE SOL
-            <span class="line"></span>
-        </div>
-        <div class="flow-section">
-            <div class="flow-row">
-                <div class="flow-node">💰 SOL de trades</div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-node highlight">🏦 Vault del Evento</div>
-                <span class="flow-arrow delay1">→</span>
-                <div class="flow-node orange-node">📊 15% extraído<br><small>antes del settlement</small></div>
-                <span class="flow-arrow delay2">→</span>
-                <div class="flow-node purple-node">🏛️ Tesorería +<br>Pool Dividendos</div>
-            </div>
-            <div class="flow-row" style="margin-top:10px;">
-                <div class="flow-node green-node">🏆 85% restante</div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-node highlight">👥 Ganadores<br><small>cobran proporcionalmente</small></div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-node" style="border-color:#ff5252;color:#ff5252;">🔥 Perdedores<br><small>tokens quemados</small></div>
-            </div>
-            <div class="highlight-box">
-                💡 <strong>Analogía:</strong> El vault es como una <em>caja fuerte</em> por evento. Al cerrar, el protocolo toma un 15% como "comisión de casa" y el 85% se reparte entre los ganadores. Los tokens perdedores se queman (no valen nada).
-            </div>
-        </div>
-
-        <!-- ==================== FUENTES DE INGRESOS ==================== -->
-        <div class="section-title">
-            <span class="icon">💰</span> FUENTES DE INGRESOS DEL PROTOCOLO
-            <span class="line"></span>
-        </div>
-        <div class="revenue-strip">
-            <div class="revenue-card">
-                <div class="big-icon">📊</div>
-                <h4>1. Fees de Trading (FIS)</h4>
-                <p style="font-size:0.8rem;">Entre <strong>0.05% y 0.5%</strong> por cada trade</p>
-                <p class="dest">→ Tesorería + Pool Dividendos</p>
-            </div>
-            <div class="revenue-card">
-                <div class="big-icon">🏦</div>
-                <h4>2. 15% del Vault al Cierre</h4>
-                <p style="font-size:0.8rem;">En <strong>cada evento resuelto</strong></p>
-                <p class="dest">→ Tesorería + Pool Dividendos</p>
-            </div>
-            <div class="revenue-card">
-                <div class="big-icon">🆓</div>
-                <h4>3. Posición LIBRE (1v1)</h4>
-                <p style="font-size:0.8rem;">Si nadie ocupa LIBRE → el <strong>protocolo es holder por defecto</strong></p>
-                <p style="font-size:0.73rem;color:var(--text2);">No apuesta, solo recoge valor residual no reclamado.</p>
-                <p class="dest">→ Tesorería + Pool Dividendos</p>
-            </div>
-        </div>
-
-        <!-- ==================== LYNX TOKEN ==================== -->
-        <div class="section-title">
-            <span class="icon">🪙</span> LYNX TOKEN — UTILIDAD & EMISIÓN
-            <span class="line"></span>
-        </div>
-        <div class="cards-grid">
-            <div class="card card-accent-purple">
-                <h3><span class="emoji">📸</span> ¿Cómo se emite?</h3>
-                <ul>
-                    <li><strong>Snapshot al cut-off</strong> (cierre del mercado)</li>
-                    <li>Se emite a <strong>todos los holders</strong> en ese momento</li>
-                    <li>Proporcional a los holdings en el snapshot</li>
-                </ul>
-                <div class="highlight-box" style="margin-top:12px;">
-                    ⚠️ <strong>PENDIENTE:</strong>
-                    <span style="font-size:0.73rem;"> A todos los holdres  (premia participación y liquidez)</span>
-                </div>
-            </div>
-            <div class="card card-accent-blue">
-                <h3><span class="emoji">🎯</span> Utilidades de LYNX</h3>
-                <ul>
-                    <li><strong>Hold</strong> → Dividendos pasivos del pool</li>
-                    <li><strong>Burn</strong> → Acceso a eventos LYNX exclusivos</li>
-                    <li>Eventos LYNX operan <strong>con LYNX, sin SOL</strong></li>
-                    <li>El burn es el <strong>coste de entrada</strong></li>
-                    <li>🔥 Burn <strong>reduce supply</strong> → beneficia a todos los holders</li>
-                </ul>
-            </div>
-        </div>
-        <!-- Línea de tiempo cut-off vs settlement -->
-        <div class="flow-section" style="margin-top:16px;">
-            <h4 style="text-align:center; margin-bottom:14px; color:var(--text);">⏱️ Dos momentos clave: Cut-off vs Settlement</h4>
-            <div class="flow-row">
-                <div class="flow-node purple-node">📸 Cut-off<br><small>Se bloquea trading</small></div>
-                <span class="flow-arrow">→</span>
-                <div class="flow-node highlight">🪙 Emisión LYNX<br><small>A todos los holders</small></div>
-                <span class="flow-arrow delay2">→</span>
-                <div class="flow-node green-node">🏁 Settlement<br><small>Se resuelve resultado</small></div>
-                <span class="flow-arrow delay3">→</span>
-                <div class="flow-node orange-node">💰 Ganadores<br><small>cobran del vault</small></div>
-            </div>
-            <div class="highlight-box" style="margin-top:14px;">
-                💡 <strong>Analogía:</strong> El <strong>cut-off</strong> es como el cierre de apuestas antes del partido (foto finish de quién tiene tokens). El <strong>settlement</strong> es cuando termina el partido y se paga. LYNX premia a los que <em>aguantaron hasta el cut-off</em>, no a los que vendieron antes. Esto incentiva el <strong>holding</strong> y da liquidez al protocolo.
-            </div>
-            <p style="text-align:center; font-size:0.75rem; color:var(--text3); margin-top:10px;">
-                📌 <strong>Ejemplo:</strong> Real Madrid vs Barcelona — Cut-off: Sábado 21:00 (kick off) → LYNX emitido a las 21:00 — Settlement: Sábado 23:00 (fin partido) → SOL liquidado a las 23:00
-            </p>
-        </div>
-
-        <!-- ==================== CONTRATOS A DISEÑAR ==================== -->
-        <div class="section-title">
-            <span class="icon">⚙️</span> CONTRATOS A DISEÑAR
-            <span class="line"></span>
-        </div>
-        <div class="cards-grid">
-            <div class="card card-accent-gold">
-                <h3><span class="emoji">1.</span> EventFactory</h3>
-                <p>Crea eventos, emite tokens de posición, gestiona estados (Abierto → Activo → Resuelto).</p>
-            </div>
-            <div class="card card-accent-cyan">
-                <h3><span class="emoji">2.</span> Vault</h3>
-                <p>Custodia SOL por evento, gestiona el 15% al cierre, devuelve SOL en eventos expirados.</p>
-            </div>
-            <div class="card card-accent-orange">
-                <h3><span class="emoji">3.</span> OrderBook</h3>
-                <p>Registra órdenes on-chain. El matching se hace off-chain para velocidad y eficiencia.</p>
-            </div>
-            <div class="card card-accent-purple">
-                <h3><span class="emoji">4.</span> LynxToken</h3>
-                <p>SPL token con lógica de burn + distribución de dividendos del pool a holders.</p>
-            </div>
-        </div>
-
-        <!-- ==================== FOOTER ==================== -->
-        <div class="divider">
-            <span class="diamond">🔹</span>
-            <span class="dline"></span>
-            <span class="diamond">🔹</span>
-        </div>
-        <p style="text-align:center; color:var(--text3); font-size:0.75rem; padding-bottom:20px;">
-            🦊 <strong>Lynx Protocol</strong> — Arquitectura híbrida Solana &nbsp;|&nbsp; Matching off-chain &nbsp;|&nbsp; Settlement on-chain &nbsp;|&nbsp; Único punto pendiente: criterio de emisión LYNX
-        </p>
-
+<div class="container">
+    <div class="tech-header">
+        <h1>🦊 Lynx Protocol v2 — Informe Técnico Completo</h1>
+        <div class="sub">Incluye el <span style="color:var(--oracle);">🔮 Oráculo de resolución</span> · Seguridad extremo a extremo</div>
     </div>
+
+    <!-- ======== SECCIÓN ORÁCULO (NUEVO) ======== -->
+    <div class="section">
+        <h2>🔮 Oráculo — Determinación del Resultado</h2>
+        <p>El oráculo es la <strong>fuente de verdad</strong> que define al ganador. Se integra como un módulo desacoplado para permitir dos modos de operación, manteniendo la seguridad.</p>
+
+        <h3>Modos de Resolución</h3>
+        <div class="table-wrap">
+            <table>
+                <tr><th>Modo</th><th>Descripción</th><th>Confianza</th></tr>
+                <tr>
+                    <td><span class="tag tag-warn">Manual (Admin)</span></td>
+                    <td>Una dirección multisig (3/5) llama a <code>resolve_event(resultado)</code>. Válido para eventos de baja frecuencia o alta subjetividad.</td>
+                    <td>Social / Gobernanza</td>
+                </tr>
+                <tr>
+                    <td><span class="tag tag-oracle">Automatizado (Switchboard)</span></td>
+                    <td>Un oráculo descentralizado (Switchboard) trae el resultado de una API verificada. El contrato consume el dato una vez que el oráculo lo publica on-chain.</td>
+                    <td>Criptoeconómica (stake de nodos)</td>
+                </tr>
+            </table>
+        </div>
+
+        <h3>Flujo Automatizado con Switchboard</h3>
+        <div class="flow-steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content">Al crear evento estándar, el admin configura una <strong>tarea de oráculo</strong> (ej. API de resultados deportivos) y especifica el <code>oracle_address</code> en la cuenta del evento.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content">El evento permanece en estado <code>Active</code> hasta la fecha de resolución. Nadie puede resolver manualmente si el campo <code>oracle_address</code> no es nulo.</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content">Un <strong>keeper</strong> (script off-chain) solicita al oráculo la actualización. Switchboard ejecuta la tarea, obtiene el resultado (0 o 1) y lo escribe en una cuenta de datos.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-content">Inmediatamente, se invoca <code>resolve_event</code> on-chain, que lee el dato de la cuenta del oráculo. El contrato verifica que la cuenta pertenece al oráculo configurado y que el dato es reciente (<code>max_age</code> segundos).</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-content">Con el resultado validado, el contrato procede al settlement: calcula el 15% de comisión, distribuye el 85% entre ganadores, quema tokens perdedores. Todo en una misma transacción atómica.</div></div>
+        </div>
+
+        <h3>Implementación en Anchor</h3>
+        <div class="code-block"><span class="comment">// Instrucción de resolución con oráculo</span>
+<span class="keyword">pub fn</span> <span class="function">resolve_with_oracle</span>(ctx: Context<ResolveOracle>) -> <span class="type">Result<()></span> {
+    <span class="keyword">let</span> event = &<span class="keyword">mut</span> ctx.accounts.event;
+    <span class="keyword">let</span> oracle_data = &ctx.accounts.oracle_data;
+
+    <span class="comment">// 1. Verificar que el oráculo es el designado para este evento</span>
+    <span class="keyword">require</span>!(event.oracle_address == oracle_data.key(), <span class="string">ErrorCode::WrongOracle</span>);
+    <span class="comment">// 2. Verificar que el dato es reciente (ej. menos de 60 segundos)</span>
+    <span class="keyword">let</span> clock = Clock::get()?;
+    <span class="keyword">require</span>!(clock.unix_timestamp - oracle_data.timestamp &lt; <span class="string">60</span>, <span class="string">ErrorCode::StaleData</span>);
+    <span class="comment">// 3. El dato del oráculo (0 = NO, 1 = YES) define el resultado</span>
+    <span class="keyword">let</span> result = oracle_data.value == <span class="string">1</span>;
+    event.resolution = Some(result);
+    event.state = EventState::Resolved;
+
+    <span class="comment">// 4. Llamar al vault para distribuir fondos</span>
+    <span class="function">settle_vault</span>(ctx.accounts.vault, result)?;
+    <span class="function">Ok</span>(())
+}</div>
+
+        <div class="security-note">
+            🔒 <strong>Validaciones críticas:</strong> Se verifica que la cuenta del oráculo coincida con la almacenada en el evento. Se impone un <code>max_age</code> para evitar datos obsoletos. Switchboard garantiza que solo el oráculo autorizado puede actualizar su cuenta de datos.
+        </div>
+
+        <h3>Oráculo para Duelos 1v1</h3>
+        <p>Los duelos heredan la resolución del evento padre. Si el padre se resuelve vía oráculo, el duelo se resuelve automáticamente en la misma transacción, o el settlement del duelo se gatilla al confirmarse la resolución del padre.</p>
+        <div class="info-note">
+            💡 <strong>Flexibilidad:</strong> El diseño permite que un evento padre use oráculo y sus duelos asociados se beneficien de esa resolución descentralizada sin configuraciones adicionales.
+        </div>
+    </div>
+
+    <!-- ======== STACK (ACTUALIZADO) ======== -->
+    <div class="section">
+        <h2>⚙️ Stack Tecnológico (con Oráculo)</h2>
+        <div class="table-wrap">
+            <table>
+                <tr><th>Componente</th><th>Tecnología</th><th>Propósito</th></tr>
+                <tr><td>Contratos</td><td>Anchor (Rust)</td><td>EventFactory, Vault, OrderBook, LynxToken</td></tr>
+                <tr><td>Oráculo</td><td><strong>Switchboard</strong></td><td>Traer resultados verificables (deportes, elecciones, etc.) on-chain</td></tr>
+                <tr><td>Matching Engine</td><td>Node.js / Rust</td><td>Emparejamiento off-chain, envía transacciones firmadas</td></tr>
+                <tr><td>Keeper</td><td>Serverless (AWS Lambda)</td><td>Dispara la actualización del oráculo en el momento programado</td></tr>
+                <tr><td>Indexador</td><td>Helius webhook / Geyser</td><td>Escucha cambios de estado on-chain</td></tr>
+                <tr><td>Base de Datos</td><td>PostgreSQL + Redis</td><td>Almacena órdenes y eventos</td></tr>
+                <tr><td>Frontend</td><td>Next.js + Wallet Adapter</td><td>Interfaz de usuario</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- ======== FLUJO DEL DUELO (CON ORÁCULO) ======== -->
+    <div class="section">
+        <h2>⚔️ Flujo del Duelo con Resolución Automática</h2>
+        <div class="flow-steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content">Usuario A crea duelo por X SOL. Se bloquea SOL en vault. Evento padre aún no resuelto.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content">Usuario B entra con X SOL. Duelo en estado <strong>Activo</strong>. Trading habilitado.</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content">El evento padre está configurado con un oráculo. En la fecha de corte, el keeper invoca la actualización.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-content">Switchboard publica el resultado en la cuenta on-chain. Se llama a <code>resolve_event</code> del padre.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-content">El contrato del padre propaga la resolución automáticamente a todos los duelos hijos. El vault de cada duelo hace el settlement (15% comisión, pago a ganadores).</div></div>
+        </div>
+    </div>
+
+    <!-- ======== SEGURIDAD DEL ORÁCULO ======== -->
+    <div class="section">
+        <h2>🛡️ Seguridad del Oráculo</h2>
+        <ul>
+            <li><strong>Descentralización:</strong> Switchboard emplea una red de nodos que deben hacer staking. Manipular el resultado es costoso.</li>
+            <li><strong>Múltiples fuentes:</strong> La tarea del oráculo puede configurarse para consultar 3 APIs distintas y tomar la mediana, reduciendo el riesgo de una fuente falsa.</li>
+            <li><strong>Tiempo de espera (grace period):</strong> Después de que el oráculo publica, se puede configurar un retraso (ej. 60 segundos) antes de que el contrato acepte el dato, para permitir impugnaciones.</li>
+            <li><strong>Modo de emergencia:</strong> Si el oráculo falla o no se actualiza en 24h, una multisig administrativa puede forzar la resolución manual como fallback.</li>
+        </ul>
+    </div>
+
+    <!-- ======== COSTOS (ACTUALIZADO CON ORÁCULO) ======== -->
+    <div class="section">
+        <h2>💰 Estimación de Costos con Oráculo</h2>
+        <p>Switchboard cobra por actualización (en SOL) según la complejidad. Para un escenario típico:</p>
+        <ul>
+            <li><strong>Creación de tarea (una vez):</strong> ~0.02 SOL (~$2.5 USD)</li>
+            <li><strong>Por actualización (cada resolución de evento):</strong> ~0.0005 SOL (~$0.07 USD)</li>
+            <li><strong>Keeper serverless (AWS Lambda):</strong> Costo mínimo (casi $0 si es bajo volumen).</li>
+        </ul>
+        <p>Esto añade menos de <strong>$10 USD/mes</strong> al presupuesto operativo, incluso con cientos de eventos resueltos al mes.</p>
+        <div class="info-note">
+            💡 El costo de oráculo es marginal comparado con la transparencia y automatización que aporta. Para eventos de alto valor, es la opción recomendada.
+        </div>
+    </div>
+
+    <div style="text-align:center; margin-top:10px; padding-bottom:20px; color:var(--text3); font-size:0.8rem; border-top:1px solid var(--border); padding-top:16px;">
+        Lynx Protocol v2 — Ahora con 🔮 Oráculo integrado. Resolución confiable, sin confianza ciega en el admin.
+    </div>
+</div>
 </body>
-  </html>
+</html>
